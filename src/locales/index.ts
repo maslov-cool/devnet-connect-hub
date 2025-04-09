@@ -36,7 +36,6 @@ export const translations = {
     skills: "Навыки",
     contacts: "Контакты",
     information: "Информация",
-    registrationDate: "Дата регистрации:",
     
     // Developers
     searchByName: "Поиск по имени, роли, описанию или навыкам...",
@@ -130,7 +129,6 @@ export const translations = {
     skills: "Skills",
     contacts: "Contacts",
     information: "Information",
-    registrationDate: "Registration Date:",
     
     // Developers
     searchByName: "Search by name, role, description or skills...",

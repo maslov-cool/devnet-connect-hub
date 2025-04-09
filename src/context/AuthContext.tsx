@@ -15,6 +15,7 @@ export interface User {
   telegramLink?: string;
   githubLink?: string;
   specialization?: string;
+  telegram?: string; // Add the telegram property
 }
 
 interface UserWithPassword extends User {
