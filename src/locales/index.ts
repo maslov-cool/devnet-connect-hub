@@ -35,6 +35,7 @@ export const translations = {
     skills: "Навыки",
     contacts: "Контакты",
     information: "Информация",
+    aboutMe: "О себе",
     
     // Developers
     searchByName: "Поиск по имени, роли, описанию или навыкам...",
@@ -46,6 +47,7 @@ export const translations = {
     newMessage: "Новое сообщение",
     searchDialogs: "Поиск диалогов...",
     online: "В сети",
+    wasRecently: "Был(а) недавно",
     sendMessage: "Отправить сообщение",
     typeMessage: "Введите сообщение...",
     loginToMessage: "Войти в аккаунт",
@@ -85,7 +87,8 @@ export const translations = {
     aboutDeveloper: "О разработчике",
     technicalStack: "Технический стек",
     workExperience: "Опыт работы",
-    language: "Язык"
+    language: "Язык",
+    requiredFields: "Обязательные поля"
   },
   en: {
     // Navigation
@@ -122,6 +125,7 @@ export const translations = {
     skills: "Skills",
     contacts: "Contacts",
     information: "Information",
+    aboutMe: "About Me",
     
     // Developers
     searchByName: "Search by name, role, description or skills...",
@@ -133,6 +137,7 @@ export const translations = {
     newMessage: "New Message",
     searchDialogs: "Search dialogs...",
     online: "Online",
+    wasRecently: "Was recently online",
     sendMessage: "Send Message",
     typeMessage: "Type a message...",
     loginToMessage: "Login to account",
@@ -172,6 +177,7 @@ export const translations = {
     aboutDeveloper: "About Developer",
     technicalStack: "Technical Stack",
     workExperience: "Work Experience",
-    language: "Language"
+    language: "Language",
+    requiredFields: "Required fields"
   }
 };

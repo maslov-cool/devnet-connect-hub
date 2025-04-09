@@ -13,7 +13,7 @@ const Layout = () => {
   }, [location.pathname]);
   
   return (
-    <div className="min-h-screen flex flex-col">
+    <div className="min-h-screen flex flex-col dark:bg-gray-900 dark:text-white">
       <Navbar />
       <main className="flex-grow">
         <Outlet />

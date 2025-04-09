@@ -6,7 +6,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, Plus, MessageSquare } from "lucide-react";
+import { Search, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const MessagesPage = () => {
@@ -98,19 +98,12 @@ const MessagesPage = () => {
             </div>
           </div>
           
-          {/* Empty state */}
-          <div className="bg-card rounded-lg border shadow-sm p-6 flex items-center justify-center md:col-span-2">
+          {/* Empty state - desktop only, removed instructions text */}
+          <div className="hidden md:flex bg-card rounded-lg border shadow-sm p-6 items-center justify-center md:col-span-2">
             <div className="text-center">
               <div className="mx-auto h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-4">
-                <Plus className="h-12 w-12 text-muted-foreground" />
+                <MessageSquare className="h-12 w-12 text-muted-foreground" />
               </div>
-              <h2 className="text-xl font-medium mb-2">{t("newMessage")}</h2>
-              <p className="text-muted-foreground mb-4">
-                {t("language") === "ru" 
-                  ? "Выберите контакт из списка слева, чтобы начать беседу"
-                  : "Select a contact from the list on the left to start a conversation"
-                }
-              </p>
             </div>
           </div>
         </div>

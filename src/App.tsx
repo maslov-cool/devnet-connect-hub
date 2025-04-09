@@ -16,6 +16,7 @@ import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 import NotFound from "./pages/NotFound";
 import ChatPage from "./pages/ChatPage";
+import SettingsPage from "./pages/SettingsPage";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 
@@ -41,6 +42,7 @@ const App = () => (
                   <Route path="about" element={<AboutCreatorsPage />} />
                   <Route path="for-developers" element={<ForDevelopersPage />} />
                   <Route path="profile/:id" element={<ProfilePage />} />
+                  <Route path="settings" element={<SettingsPage />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

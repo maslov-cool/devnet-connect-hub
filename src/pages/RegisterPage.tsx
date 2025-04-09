@@ -22,6 +22,7 @@ const RegisterPage = () => {
   const [skills, setSkills] = useState("");
   const [experience, setExperience] = useState("0-1");
   const [specialization, setSpecialization] = useState("");
+  const [aboutMe, setAboutMe] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   
@@ -32,13 +33,13 @@ const RegisterPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !email || !password || !confirmPassword) {
-      toast.error(t("Пожалуйста, заполните все обязательные поля"));
+    if (!username || !email || !password || !confirmPassword || !skills || !experience || !specialization || !aboutMe) {
+      toast.error(t("language") === "ru" ? "Пожалуйста, заполните все обязательные поля" : "Please fill in all required fields");
       return;
     }
     
     if (password !== confirmPassword) {
-      toast.error(t("Пароли не совпадают"));
+      toast.error(t("language") === "ru" ? "Пароли не совпадают" : "Passwords do not match");
       return;
     }
     
@@ -55,7 +56,8 @@ const RegisterPage = () => {
         githubLink,
         skills: skillsArray,
         experience,
-        specialization
+        specialization,
+        aboutMe
       };
       
       const success = await register(username, email, password, profileData);
@@ -65,7 +67,7 @@ const RegisterPage = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error(t("Произошла ошибка при регистрации"));
+      toast.error(t("language") === "ru" ? "Произошла ошибка при регистрации" : "An error occurred during registration");
     } finally {
       setIsLoading(false);
     }
@@ -94,7 +96,7 @@ const RegisterPage = () => {
           </div>
           <CardTitle>{t("register")}</CardTitle>
           <CardDescription>
-            {t("Создайте аккаунт для доступа к DevNet")}
+            {t("language") === "ru" ? "Создайте аккаунт для доступа к DevNet" : "Create an account to access DevNet"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -110,7 +112,7 @@ const RegisterPage = () => {
                     />
                   ) : (
                     <span className="text-xs text-center text-muted-foreground p-2">
-                      {t("Нажмите, чтобы загрузить аватар")}
+                      {t("language") === "ru" ? "Нажмите, чтобы загрузить аватар" : "Click to upload avatar"}
                     </span>
                   )}
                   <input
@@ -118,6 +120,7 @@ const RegisterPage = () => {
                     accept="image/*"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={handleFileChange}
+                    required
                   />
                 </div>
               </div>
@@ -132,7 +135,7 @@ const RegisterPage = () => {
                 type="text"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                placeholder={t("Введите имя пользователя")}
+                placeholder={t("language") === "ru" ? "Введите имя пользователя" : "Enter username"}
                 autoComplete="username"
                 required
               />
@@ -147,8 +150,22 @@ const RegisterPage = () => {
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder={t("Введите email")}
+                placeholder={t("language") === "ru" ? "Введите email" : "Enter email"}
                 autoComplete="email"
+                required
+              />
+            </div>
+            
+            <div>
+              <label htmlFor="aboutMe" className="block text-sm font-medium mb-1">
+                {t("aboutMe")} *
+              </label>
+              <Textarea
+                id="aboutMe"
+                value={aboutMe}
+                onChange={(e) => setAboutMe(e.target.value)}
+                placeholder={t("language") === "ru" ? "Расскажите о себе" : "Tell us about yourself"}
+                rows={3}
                 required
               />
             </div>
@@ -194,7 +211,7 @@ const RegisterPage = () => {
             
             <div>
               <label htmlFor="skills" className="block text-sm font-medium mb-1">
-                {t("skills")}
+                {t("skills")} *
               </label>
               <Input
                 id="skills"
@@ -202,39 +219,41 @@ const RegisterPage = () => {
                 value={skills}
                 onChange={(e) => setSkills(e.target.value)}
                 placeholder="React, JavaScript, TypeScript..."
+                required
               />
               <p className="text-xs text-muted-foreground mt-1">
-                {t("Разделяйте навыки запятыми")}
+                {t("language") === "ru" ? "Разделяйте навыки запятыми" : "Separate skills with commas"}
               </p>
             </div>
             
             <div>
               <label htmlFor="experience" className="block text-sm font-medium mb-1">
-                {t("experience")}
+                {t("experience")} *
               </label>
-              <Select value={experience} onValueChange={setExperience}>
+              <Select value={experience} onValueChange={setExperience} required>
                 <SelectTrigger>
-                  <SelectValue placeholder={t("Выберите опыт работы")} />
+                  <SelectValue placeholder={t("language") === "ru" ? "Выберите опыт работы" : "Select work experience"} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="0-1">0-1 {t("лет")}</SelectItem>
-                  <SelectItem value="1-3">1-3 {t("лет")}</SelectItem>
-                  <SelectItem value="3-5">3-5 {t("лет")}</SelectItem>
-                  <SelectItem value="5+">5+ {t("лет")}</SelectItem>
+                  <SelectItem value="0-1">0-1 {t("language") === "ru" ? "лет" : "years"}</SelectItem>
+                  <SelectItem value="1-3">1-3 {t("language") === "ru" ? "лет" : "years"}</SelectItem>
+                  <SelectItem value="3-5">3-5 {t("language") === "ru" ? "лет" : "years"}</SelectItem>
+                  <SelectItem value="5+">5+ {t("language") === "ru" ? "лет" : "years"}</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             
             <div>
               <label htmlFor="specialization" className="block text-sm font-medium mb-1">
-                {t("specialization")}
+                {t("specialization")} *
               </label>
               <Textarea
                 id="specialization"
                 value={specialization}
                 onChange={(e) => setSpecialization(e.target.value)}
-                placeholder={t("Опишите ваше основное направление разработки")}
+                placeholder={t("language") === "ru" ? "Опишите ваше основное направление разработки" : "Describe your main development direction"}
                 rows={3}
+                required
               />
             </div>
             
@@ -247,7 +266,7 @@ const RegisterPage = () => {
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder={t("Введите пароль")}
+                placeholder={t("language") === "ru" ? "Введите пароль" : "Enter password"}
                 autoComplete="new-password"
                 required
               />
@@ -255,14 +274,14 @@ const RegisterPage = () => {
             
             <div>
               <label htmlFor="confirm-password" className="block text-sm font-medium mb-1">
-                {t("Подтверждение пароля")} *
+                {t("language") === "ru" ? "Подтверждение пароля" : "Confirm Password"} *
               </label>
               <Input
                 id="confirm-password"
                 type="password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
-                placeholder={t("Подтвердите пароль")}
+                placeholder={t("language") === "ru" ? "Подтвердите пароль" : "Confirm password"}
                 autoComplete="new-password"
                 required
               />
@@ -286,7 +305,7 @@ const RegisterPage = () => {
                       d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                     ></path>
                   </svg>
-                  {t("Загрузка...")}
+                  {t("language") === "ru" ? "Загрузка..." : "Loading..."}
                 </span>
               ) : (
                 t("register")
@@ -294,13 +313,13 @@ const RegisterPage = () => {
             </Button>
             
             <p className="text-xs text-muted-foreground text-center">
-              * {t("Обязательные поля")}
+              * {t("requiredFields")}
             </p>
           </form>
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            {t("Уже есть аккаунт? ")}
+            {t("language") === "ru" ? "Уже есть аккаунт? " : "Already have an account? "}
             <Link to="/login" className="text-blue-900 dark:text-blue-300 hover:underline">
               {t("login")}
             </Link>
