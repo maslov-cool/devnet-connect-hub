@@ -8,13 +8,13 @@ type TranslationKey = keyof typeof translations.ru;
 interface LanguageContextType {
   language: Language;
   setLanguage: (lang: Language) => void;
-  t: (key: TranslationKey) => string;
+  t: (key: TranslationKey | string) => string;
 }
 
 export const LanguageContext = createContext<LanguageContextType>({
   language: "ru",
   setLanguage: () => {},
-  t: (key) => key,
+  t: (key) => key.toString(),
 });
 
 interface LanguageProviderProps {
@@ -32,8 +32,9 @@ export const LanguageProvider: React.FC<LanguageProviderProps> = ({ children }) 
     document.documentElement.lang = language;
   }, [language]);
 
-  const t = (key: TranslationKey): string => {
-    return translations[language][key] || translations.ru[key] || key;
+  const t = (key: TranslationKey | string): string => {
+    const translationKey = key as TranslationKey;
+    return translations[language][translationKey] || translations.ru[translationKey] || key.toString();
   };
 
   return (

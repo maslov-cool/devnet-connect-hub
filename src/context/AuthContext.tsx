@@ -11,9 +11,17 @@ export interface User {
   skills?: string[];
   currentlyStudying?: string[];
   registrationDate?: string;
+  vkLink?: string;
+  telegramLink?: string;
+  githubLink?: string;
+  specialization?: string;
 }
 
-const demoUsers = [
+interface UserWithPassword extends User {
+  password: string;
+}
+
+const demoUsers: UserWithPassword[] = [
   {
     id: "1",
     username: "ilazorin",
@@ -24,7 +32,10 @@ const demoUsers = [
     skills: ["React", "JavaScript"],
     currentlyStudying: ["TypeScript"],
     registrationDate: "2025-04-09T15:22:00",
-    telegram: "1"
+    telegram: "1",
+    telegramLink: "https://t.me/ilazorin",
+    githubLink: "https://github.com/ilazorin",
+    specialization: "Frontend разработка и дизайн"
   },
   {
     id: "2",
@@ -36,7 +47,10 @@ const demoUsers = [
     skills: ["Python", "Flask"],
     currentlyStudying: ["React"],
     registrationDate: "2025-04-09T15:23:00",
-    telegram: "1"
+    telegram: "1",
+    telegramLink: "https://t.me/ten-fun",
+    githubLink: "https://github.com/ten-fun",
+    specialization: "Backend разработка и системная архитектура"
   }
 ];
 
@@ -45,10 +59,11 @@ interface AuthContextType {
   users: User[];
   login: (username: string, password: string) => Promise<boolean>;
   logout: () => void;
-  register: (username: string, email: string, password: string) => Promise<boolean>;
+  register: (username: string, email: string, password: string, additionalData?: any) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<boolean>;
   isAuthenticated: boolean;
   updateUser: (userData: Partial<User>) => void;
+  deleteUser: (userId: string) => void;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -59,7 +74,8 @@ export const AuthContext = createContext<AuthContextType>({
   register: async () => false,
   forgotPassword: async () => false,
   isAuthenticated: false,
-  updateUser: () => {}
+  updateUser: () => {},
+  deleteUser: () => {}
 });
 
 interface AuthProviderProps {
@@ -68,7 +84,7 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [users, setUsers] = useState<any[]>(demoUsers);
+  const [users, setUsers] = useState<User[]>(demoUsers.map(({ password, ...rest }) => rest));
   const [isAuthenticated, setIsAuthenticated] = useState<boolean>(false);
 
   useEffect(() => {
@@ -104,7 +120,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     toast.success("Вы вышли из системы");
   };
 
-  const register = async (username: string, email: string, password: string): Promise<boolean> => {
+  const register = async (
+    username: string, 
+    email: string, 
+    password: string,
+    additionalData?: any
+  ): Promise<boolean> => {
     // Check if user already exists
     const userExists = users.some(u => u.username === username || u.email === email);
     
@@ -120,17 +141,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       email,
       password,
       registrationDate: new Date().toISOString(),
-      experience: "0-1",
-      skills: [],
+      experience: additionalData?.experience || "0-1",
+      skills: additionalData?.skills || [],
       currentlyStudying: [],
-      telegram: username
+      telegram: username,
+      telegramLink: additionalData?.telegramLink || "",
+      vkLink: additionalData?.vkLink || "",
+      githubLink: additionalData?.githubLink || "",
+      specialization: additionalData?.specialization || ""
     };
     
+    // Обновляем demoUsers для сохранения пароля
+    demoUsers.push(newUser);
+    
     // Update users array
-    setUsers([...users, newUser]);
+    const { password: _, ...userWithoutPassword } = newUser;
+    setUsers([...users, userWithoutPassword]);
     
     // Log in the new user
-    const { password: _, ...userWithoutPassword } = newUser;
     setUser(userWithoutPassword);
     setIsAuthenticated(true);
     localStorage.setItem('user', JSON.stringify(userWithoutPassword));
@@ -164,6 +192,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     toast.success("Профиль обновлен");
   };
 
+  const deleteUser = (userId: string) => {
+    if (user && user.id === userId) {
+      // Если пользователь удаляет свой профиль, выходим из системы
+      logout();
+    }
+    
+    // Удаляем пользователя из списка
+    setUsers(users.filter(u => u.id !== userId));
+    toast.success("Профиль успешно удален");
+  };
+
   return (
     <AuthContext.Provider 
       value={{ 
@@ -174,7 +213,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         register, 
         forgotPassword, 
         isAuthenticated,
-        updateUser 
+        updateUser,
+        deleteUser
       }}
     >
       {children}

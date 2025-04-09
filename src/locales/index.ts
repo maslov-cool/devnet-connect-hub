@@ -19,6 +19,13 @@ export const translations = {
     email: "Email",
     resetPassword: "Сбросить пароль",
     sendResetLink: "Отправить ссылку для сброса",
+    goBack: "Назад",
+    vkLink: "Ссылка ВКонтакте",
+    telegramLink: "Ссылка Telegram",
+    githubLink: "Ссылка GitHub",
+    technologies: "Технологии",
+    experienceDetails: "Опыт работы (подробно)",
+    specialization: "Направление разработки",
     
     // Profile
     profile: "Профиль",
@@ -41,7 +48,6 @@ export const translations = {
     createProject: "Создать проект",
     projectName: "Название проекта",
     projectDescription: "Описание проекта",
-    technologies: "Технологии",
     
     // Messages
     newMessage: "Новое сообщение",
@@ -49,6 +55,7 @@ export const translations = {
     online: "В сети",
     sendMessage: "Отправить сообщение",
     typeMessage: "Введите сообщение...",
+    loginToMessage: "Войти в аккаунт",
     
     // Admin
     usersData: "Данные пользователей",
@@ -69,6 +76,9 @@ export const translations = {
     meetTheTeam: "Познакомьтесь с командой, стоящей за проектом DevNet",
     projectFounder: "Основатель проекта",
     leadDeveloper: "Ведущий разработчик",
+    description: "Описание",
+    role: "Роль",
+    link: "Ссылка",
     
     // Misc
     search: "Поиск...",
@@ -81,7 +91,8 @@ export const translations = {
     uploadFromDevice: "Загрузить с устройства",
     aboutDeveloper: "О разработчике",
     technicalStack: "Технический стек",
-    workExperience: "Опыт работы"
+    workExperience: "Опыт работы",
+    language: "Язык"
   },
   en: {
     // Navigation
@@ -102,6 +113,13 @@ export const translations = {
     email: "Email",
     resetPassword: "Reset Password",
     sendResetLink: "Send Reset Link",
+    goBack: "Back",
+    vkLink: "VK Link",
+    telegramLink: "Telegram Link",
+    githubLink: "GitHub Link",
+    technologies: "Technologies",
+    experienceDetails: "Experience (detailed)",
+    specialization: "Development Specialization",
     
     // Profile
     profile: "Profile",
@@ -124,7 +142,6 @@ export const translations = {
     createProject: "Create Project",
     projectName: "Project Name",
     projectDescription: "Project Description",
-    technologies: "Technologies",
     
     // Messages
     newMessage: "New Message",
@@ -132,6 +149,7 @@ export const translations = {
     online: "Online",
     sendMessage: "Send Message",
     typeMessage: "Type a message...",
+    loginToMessage: "Login to account",
     
     // Admin
     usersData: "Users Data",
@@ -152,6 +170,9 @@ export const translations = {
     meetTheTeam: "Meet the team behind the DevNet project",
     projectFounder: "Project Founder",
     leadDeveloper: "Lead Developer",
+    description: "Description",
+    role: "Role",
+    link: "Link",
     
     // Misc
     search: "Search...",
@@ -164,6 +185,7 @@ export const translations = {
     uploadFromDevice: "Upload from Device",
     aboutDeveloper: "About Developer",
     technicalStack: "Technical Stack",
-    workExperience: "Work Experience"
+    workExperience: "Work Experience",
+    language: "Language"
   }
 };

@@ -23,24 +23,29 @@ const Navbar = () => {
       <div className="container mx-auto px-4 py-3 flex items-center justify-between">
         <div className="flex items-center space-x-1">
           <Link to="/" className="flex items-center space-x-2">
-            <div className="bg-brand-DEFAULT text-white w-10 h-10 rounded flex items-center justify-center text-xl font-bold">
+            <div className="bg-blue-900 text-white w-10 h-10 rounded flex items-center justify-center text-xl font-bold">
               D
             </div>
-            <span className="text-xl font-bold">DevNet</span>
           </Link>
         </div>
         
         <div className="hidden md:flex items-center space-x-6">
-          <Link to="/" className="font-medium hover:text-brand-DEFAULT transition-colors">
+          <Link to="/" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
             {t("home")}
           </Link>
-          <Link to="/messages" className="font-medium hover:text-brand-DEFAULT transition-colors">
+          <Link to="/developers" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
+            {t("developers")}
+          </Link>
+          <Link to="/projects" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
+            {t("projects")}
+          </Link>
+          <Link to="/messages" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
             {t("messages")}
           </Link>
-          <Link to="/about" className="font-medium hover:text-brand-DEFAULT transition-colors">
+          <Link to="/about" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
             {t("aboutCreators")}
           </Link>
-          <Link to="/for-developers" className="font-medium hover:text-brand-DEFAULT transition-colors">
+          <Link to="/for-developers" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
             {t("forDevelopers")}
           </Link>
         </div>
@@ -80,7 +85,7 @@ const Navbar = () => {
             </DropdownMenu>
           ) : (
             <Link to="/login">
-              <Button variant="default">{t("login")}</Button>
+              <Button variant="default" className="bg-blue-900 hover:bg-blue-800">{t("login")}</Button>
             </Link>
           )}
         </div>

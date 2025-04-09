@@ -9,6 +9,7 @@ import { Download, Search } from "lucide-react";
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
+import * as XLSX from 'xlsx';
 
 interface User {
   id: string;
@@ -27,14 +28,14 @@ const ForDevelopersPage = () => {
   const users: User[] = [
     {
       id: "1",
-      name: "Александр",
-      telegram: "1",
+      name: "Зорин Илья",
+      telegram: "ilazorin",
       registrationDate: "9 апр. 2025 г., 15:22"
     },
     {
       id: "2",
-      name: "ten-fun",
-      telegram: "1",
+      name: "Маслов Александр",
+      telegram: "ten-fun",
       registrationDate: "9 апр. 2025 г., 15:23"
     }
   ];
@@ -58,18 +59,16 @@ const ForDevelopersPage = () => {
       setIsAuthenticated(true);
       toast.success(t("accessGranted"));
     } else {
-      toast.error(t("language") === "ru" ? "Неверные учетные данные" : "Invalid credentials");
+      toast.error(t("Неверные учетные данные"));
     }
   };
 
-  const handleExportToCSV = () => {
-    // In a real app, we'd generate and download a CSV file
-    toast.success(t("language") === "ru" ? "Экспорт в CSV выполнен" : "Exported to CSV");
-  };
-
   const handleExportToExcel = () => {
-    // In a real app, we'd generate and download an Excel file
-    toast.success(t("language") === "ru" ? "Экспорт в Excel выполнен" : "Exported to Excel");
+    const ws = XLSX.utils.json_to_sheet(users);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Users");
+    XLSX.writeFile(wb, "devnet_users.xlsx");
+    toast.success(t("Экспорт в Excel выполнен"));
   };
 
   return (
@@ -80,10 +79,7 @@ const ForDevelopersPage = () => {
             <CardHeader>
               <CardTitle>{t("forDevelopers")}</CardTitle>
               <CardDescription>
-                {t("language") === "ru" 
-                  ? "Пожалуйста, войдите для доступа к данным" 
-                  : "Please log in to access data"
-                }
+                {t("Пожалуйста, войдите для доступа к данным")}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -105,7 +101,7 @@ const ForDevelopersPage = () => {
                     onChange={(e) => setPassword(e.target.value)}
                   />
                 </div>
-                <Button className="w-full" onClick={handleLogin}>
+                <Button className="w-full bg-blue-900 hover:bg-blue-800" onClick={handleLogin}>
                   {t("login")}
                 </Button>
               </div>
@@ -155,11 +151,7 @@ const ForDevelopersPage = () => {
                         className="pl-10 w-full md:w-[250px]"
                       />
                     </div>
-                    <Button variant="outline" onClick={handleExportToCSV}>
-                      <Download className="mr-2 h-4 w-4" />
-                      {t("exportToCsv")}
-                    </Button>
-                    <Button onClick={handleExportToExcel}>
+                    <Button onClick={handleExportToExcel} className="bg-blue-900 hover:bg-blue-800">
                       <Download className="mr-2 h-4 w-4" />
                       {t("exportToExcel")}
                     </Button>
@@ -187,10 +179,7 @@ const ForDevelopersPage = () => {
                       {filteredUsers.length === 0 && (
                         <TableRow>
                           <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                            {t("language") === "ru" 
-                              ? "Пользователи не найдены" 
-                              : "No users found"
-                            }
+                            {t("Пользователи не найдены")}
                           </TableCell>
                         </TableRow>
                       )}
