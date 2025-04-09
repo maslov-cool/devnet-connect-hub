@@ -1,3 +1,4 @@
+
 import type { Config } from "tailwindcss";
 
 export default {
@@ -51,6 +52,11 @@ export default {
 				card: {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
+				},
+				brand: {
+					DEFAULT: '#5B4BF5',  // DevNet brand color
+					light: '#8A7BFF',
+					dark: '#4039CC'
 				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
