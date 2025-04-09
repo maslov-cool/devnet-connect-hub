@@ -3,11 +3,33 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuth } from "../hooks/useAuth";
+import { useState, useEffect } from "react";
+import { Input } from "@/components/ui/input";
+import { Search } from "lucide-react";
+import DeveloperCard from "../components/DeveloperCard";
 
 const Index = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, users, user } = useAuth();
+  
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filteredUsers, setFilteredUsers] = useState(users.filter(u => u.id !== user?.id));
+
+  useEffect(() => {
+    if (searchQuery.trim() === "") {
+      setFilteredUsers(users.filter(u => u.id !== user?.id));
+    } else {
+      const query = searchQuery.toLowerCase();
+      const filtered = users.filter(
+        (u) =>
+          u.id !== user?.id &&
+          (u.username.toLowerCase().includes(query) ||
+            (u.skills && u.skills.some((skill) => skill.toLowerCase().includes(query))))
+      );
+      setFilteredUsers(filtered);
+    }
+  }, [searchQuery, users, user]);
 
   return (
     <div className="min-h-[calc(100vh-4rem)] flex flex-col">
@@ -45,18 +67,18 @@ const Index = () => {
               <>
                 <Button 
                   size="lg" 
-                  onClick={() => navigate("/developers")} 
+                  onClick={() => navigate("/profile/" + user?.id)} 
                   className="bg-white text-brand-DEFAULT hover:bg-gray-100 hover:text-brand-dark"
                 >
-                  {t("developers")}
+                  {t("profile")}
                 </Button>
                 <Button 
                   size="lg" 
                   variant="outline"
-                  onClick={() => navigate("/projects")} 
+                  onClick={() => navigate("/messages")} 
                   className="border-white text-white hover:bg-white/10"
                 >
-                  {t("projects")}
+                  {t("messages")}
                 </Button>
               </>
             )}
@@ -67,7 +89,7 @@ const Index = () => {
       {/* Features */}
       <section className="py-16 bg-background">
         <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12">
+          <h2 className="text-3xl font-bold text-center mb-12 text-foreground">
             {t("language") === "ru" ? "Возможности DevNet" : "DevNet Features"}
           </h2>
           
@@ -78,7 +100,7 @@ const Index = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">
+              <h3 className="text-xl font-bold mb-2 text-foreground">
                 {t("language") === "ru" ? "Сообщество разработчиков" : "Developer Community"}
               </h3>
               <p className="text-muted-foreground">
@@ -95,13 +117,13 @@ const Index = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">
-                {t("language") === "ru" ? "Проекты и портфолио" : "Projects & Portfolio"}
+              <h3 className="text-xl font-bold mb-2 text-foreground">
+                {t("language") === "ru" ? "Профессиональные профили" : "Professional Profiles"}
               </h3>
               <p className="text-muted-foreground">
                 {t("language") === "ru" 
-                  ? "Создавайте, демонстрируйте и находите интересные проекты для участия и развития."
-                  : "Create, showcase and find interesting projects to participate in and develop."
+                  ? "Создавайте детальные профили с информацией о ваших навыках, опыте и контактах."
+                  : "Create detailed profiles with information about your skills, experience, and contacts."
                 }
               </p>
             </div>
@@ -112,7 +134,7 @@ const Index = () => {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                 </svg>
               </div>
-              <h3 className="text-xl font-bold mb-2">
+              <h3 className="text-xl font-bold mb-2 text-foreground">
                 {t("language") === "ru" ? "Обмен сообщениями" : "Messaging"}
               </h3>
               <p className="text-muted-foreground">
@@ -126,10 +148,56 @@ const Index = () => {
         </div>
       </section>
 
-      {/* CTA */}
+      {/* Developers Section */}
       <section className="py-16 bg-muted">
+        <div className="container mx-auto px-4">
+          <h2 className="text-3xl font-bold mb-8 text-foreground">{t("developers")}</h2>
+          
+          <div className="mb-8 relative">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
+            <Input
+              placeholder={t("searchByName")}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          
+          {isAuthenticated ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {filteredUsers.map((developer) => (
+                <DeveloperCard key={developer.id} developer={developer} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-10">
+              <h2 className="text-2xl font-medium mb-4 text-foreground">
+                {t("language") === "ru" 
+                  ? "Войдите, чтобы просматривать разработчиков"
+                  : "Log in to view developers"
+                }
+              </h2>
+              <Button 
+                className="mr-4 bg-blue-900 hover:bg-blue-800"
+                onClick={() => navigate("/login")}
+              >
+                {t("login")}
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => navigate("/register")}
+              >
+                {t("register")}
+              </Button>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="py-16 bg-background">
         <div className="container mx-auto px-4 text-center">
-          <h2 className="text-3xl font-bold mb-6">
+          <h2 className="text-3xl font-bold mb-6 text-foreground">
             {t("language") === "ru" ? "Присоединяйтесь к DevNet сегодня" : "Join DevNet Today"}
           </h2>
           <p className="text-xl mb-8 max-w-2xl mx-auto text-muted-foreground">
@@ -150,10 +218,10 @@ const Index = () => {
           {isAuthenticated && (
             <Button 
               size="lg" 
-              onClick={() => navigate("/developers")} 
+              onClick={() => navigate("/messages")} 
               className="bg-brand-DEFAULT hover:bg-brand-dark text-white"
             >
-              {t("developers")}
+              {t("messages")}
             </Button>
           )}
         </div>

@@ -4,7 +4,6 @@ export const translations = {
     // Navigation
     home: "Главная",
     developers: "Разработчики",
-    projects: "Проекты",
     messages: "Сообщения",
     aboutCreators: "О создателях",
     forDevelopers: "Для разработчиков",
@@ -42,11 +41,6 @@ export const translations = {
     yearsExperience: "лет опыта",
     currentlyStudying: "Сейчас изучает",
     fullProfile: "Полный профиль",
-    
-    // Projects
-    createProject: "Создать проект",
-    projectName: "Название проекта",
-    projectDescription: "Описание проекта",
     
     // Messages
     newMessage: "Новое сообщение",
@@ -97,7 +91,6 @@ export const translations = {
     // Navigation
     home: "Home",
     developers: "Developers",
-    projects: "Projects",
     messages: "Messages",
     aboutCreators: "About Creators",
     forDevelopers: "For Developers",
@@ -135,11 +128,6 @@ export const translations = {
     yearsExperience: "years experience",
     currentlyStudying: "Currently studying",
     fullProfile: "Full Profile",
-    
-    // Projects
-    createProject: "Create Project",
-    projectName: "Project Name",
-    projectDescription: "Project Description",
     
     // Messages
     newMessage: "New Message",

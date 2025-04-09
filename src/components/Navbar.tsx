@@ -12,11 +12,23 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { LogOut, User, Settings } from "lucide-react";
+import { 
+  LogOut, 
+  User, 
+  Settings, 
+  Menu, 
+  X 
+} from "lucide-react";
+import { useState } from "react";
 
 const Navbar = () => {
   const { user, logout } = useAuth();
   const { t } = useTranslation();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  const toggleMobileMenu = () => {
+    setMobileMenuOpen(!mobileMenuOpen);
+  };
 
   return (
     <nav className="border-b bg-background sticky top-0 z-40">
@@ -29,15 +41,10 @@ const Navbar = () => {
           </Link>
         </div>
         
+        {/* Desktop Menu */}
         <div className="hidden md:flex items-center space-x-6">
           <Link to="/" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
             {t("home")}
-          </Link>
-          <Link to="/developers" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
-            {t("developers")}
-          </Link>
-          <Link to="/projects" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
-            {t("projects")}
           </Link>
           <Link to="/messages" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
             {t("messages")}
@@ -48,6 +55,17 @@ const Navbar = () => {
           <Link to="/for-developers" className="font-medium hover:text-blue-800 dark:hover:text-blue-300 transition-colors">
             {t("forDevelopers")}
           </Link>
+        </div>
+
+        {/* Mobile menu button */}
+        <div className="md:hidden">
+          <Button variant="ghost" size="sm" onClick={toggleMobileMenu}>
+            {mobileMenuOpen ? (
+              <X className="h-6 w-6 text-blue-900 dark:text-blue-300" />
+            ) : (
+              <Menu className="h-6 w-6 text-blue-900 dark:text-blue-300" />
+            )}
+          </Button>
         </div>
 
         <div className="flex items-center space-x-4">
@@ -90,6 +108,42 @@ const Navbar = () => {
           )}
         </div>
       </div>
+
+      {/* Mobile Menu Drawer */}
+      {mobileMenuOpen && (
+        <div className="md:hidden">
+          <div className="px-4 py-3 space-y-2 bg-background border-b">
+            <Link 
+              to="/" 
+              className="block py-2 font-medium hover:text-blue-800 dark:hover:text-blue-300"
+              onClick={toggleMobileMenu}
+            >
+              {t("home")}
+            </Link>
+            <Link 
+              to="/messages" 
+              className="block py-2 font-medium hover:text-blue-800 dark:hover:text-blue-300"
+              onClick={toggleMobileMenu}
+            >
+              {t("messages")}
+            </Link>
+            <Link 
+              to="/about" 
+              className="block py-2 font-medium hover:text-blue-800 dark:hover:text-blue-300"
+              onClick={toggleMobileMenu}
+            >
+              {t("aboutCreators")}
+            </Link>
+            <Link 
+              to="/for-developers" 
+              className="block py-2 font-medium hover:text-blue-800 dark:hover:text-blue-300"
+              onClick={toggleMobileMenu}
+            >
+              {t("forDevelopers")}
+            </Link>
+          </div>
+        </div>
+      )}
     </nav>
   );
 };

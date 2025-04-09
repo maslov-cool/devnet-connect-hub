@@ -7,8 +7,6 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { ThemeProvider } from "@/components/theme-provider";
 import Layout from "./components/Layout";
 import Index from "./pages/Index";
-import DevelopersPage from "./pages/DevelopersPage";
-import ProjectsPage from "./pages/ProjectsPage";
 import MessagesPage from "./pages/MessagesPage";
 import AboutCreatorsPage from "./pages/AboutCreatorsPage";
 import ForDevelopersPage from "./pages/ForDevelopersPage";
@@ -16,7 +14,6 @@ import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import CreateProjectPage from "./pages/CreateProjectPage";
 import NotFound from "./pages/NotFound";
 import ChatPage from "./pages/ChatPage";
 import { AuthProvider } from "./context/AuthContext";
@@ -39,14 +36,11 @@ const App = () => (
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                 <Route path="/" element={<Layout />}>
                   <Route index element={<Index />} />
-                  <Route path="developers" element={<DevelopersPage />} />
-                  <Route path="projects" element={<ProjectsPage />} />
                   <Route path="messages" element={<MessagesPage />} />
                   <Route path="messages/:userId" element={<ChatPage />} />
                   <Route path="about" element={<AboutCreatorsPage />} />
                   <Route path="for-developers" element={<ForDevelopersPage />} />
                   <Route path="profile/:id" element={<ProfilePage />} />
-                  <Route path="create-project" element={<CreateProjectPage />} />
                 </Route>
                 <Route path="*" element={<NotFound />} />
               </Routes>

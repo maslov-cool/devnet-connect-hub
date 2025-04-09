@@ -1,6 +1,6 @@
 
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { Input } from "@/components/ui/input";
@@ -43,9 +43,11 @@ const MessagesPage = () => {
             <div className="mx-auto h-20 w-20 bg-blue-900 rounded-full flex items-center justify-center mb-4 text-white">
               <MessageSquare className="h-10 w-10" />
             </div>
-            <CardTitle className="text-2xl">{t("Требуется вход в аккаунт")}</CardTitle>
+            <CardTitle className="text-2xl">
+              {t("language") === "ru" ? "Требуется вход в аккаунт" : "Account login required"}
+            </CardTitle>
             <CardDescription>
-              {t("Для доступа к сообщениям необходимо войти в систему")}
+              {t("language") === "ru" ? "Для доступа к сообщениям необходимо войти в систему" : "You need to log in to access messages"}
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -73,10 +75,10 @@ const MessagesPage = () => {
             
             <div className="space-y-2">
               {filteredUsers.map((chatUser) => (
-                <Link 
+                <button
                   key={chatUser.id} 
-                  to={`/messages/${chatUser.id}`} 
-                  className="flex items-center gap-3 p-3 rounded-md hover:bg-accent"
+                  onClick={() => navigate(`/messages/${chatUser.id}`)}
+                  className="flex items-center gap-3 p-3 rounded-md hover:bg-accent w-full text-left"
                 >
                   <Avatar>
                     <AvatarImage src={chatUser.avatar} alt={chatUser.username} />
@@ -88,10 +90,10 @@ const MessagesPage = () => {
                       <p className="text-xs text-muted-foreground whitespace-nowrap">9 Apr</p>
                     </div>
                     <p className="text-sm text-muted-foreground truncate">
-                      {chatUser.id === "1" ? "1.py" : t("Привет!")}
+                      {chatUser.id === "1" ? "1.py" : t("language") === "ru" ? "Привет!" : "Hello!"}
                     </p>
                   </div>
-                </Link>
+                </button>
               ))}
             </div>
           </div>
@@ -104,7 +106,10 @@ const MessagesPage = () => {
               </div>
               <h2 className="text-xl font-medium mb-2">{t("newMessage")}</h2>
               <p className="text-muted-foreground mb-4">
-                {t("Выберите контакт из списка слева, чтобы начать беседу")}
+                {t("language") === "ru" 
+                  ? "Выберите контакт из списка слева, чтобы начать беседу"
+                  : "Select a contact from the list on the left to start a conversation"
+                }
               </p>
             </div>
           </div>
