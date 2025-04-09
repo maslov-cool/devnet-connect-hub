@@ -1,5 +1,4 @@
 
-import { User } from "../context/AuthContext";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { Link } from "react-router-dom";
@@ -7,8 +6,17 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Badge } from "@/components/ui/badge";
 import { ThumbsUp, MessageSquare } from "lucide-react";
 
+interface Developer {
+  id: string;
+  username: string;
+  avatar?: string;
+  skills?: string[];
+  currentlyStudying?: string[];
+  experience?: string;
+}
+
 interface DeveloperCardProps {
-  developer: User;
+  developer: Developer;
 }
 
 const DeveloperCard = ({ developer }: DeveloperCardProps) => {

@@ -2,45 +2,33 @@
 import React, { createContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 
-// Sample user data for demonstration
-const sampleUsers = [
-  {
-    id: "1",
-    username: "john_dev",
-    email: "john@example.com",
-    password: "password123",
-    avatar: "/lovable-uploads/71218a01-a00f-4c50-b88e-5016985aa63f.png",
-    skills: ["React", "TypeScript", "Node.js", "Express", "MongoDB"],
-    currentlyStudying: ["GraphQL", "AWS"],
-    experience: "3-5",
-    specialization: "Full Stack Web Development",
-    registrationDate: "2023-05-15",
-    aboutMe: "Full Stack Developer with 5 years of experience"
-  },
-  {
-    id: "2",
-    username: "jane_dev",
-    email: "jane@example.com",
-    password: "password123",
-    avatar: "/lovable-uploads/a5c8f24b-7c7c-491f-8c25-b774ac29eea0.png",
-    skills: ["Python", "Django", "Flask", "PostgreSQL"],
-    currentlyStudying: ["Docker", "Kubernetes"],
-    experience: "1-3",
-    specialization: "Backend Development",
-    registrationDate: "2023-06-22",
-    aboutMe: "Backend Developer specializing in Python"
-  },
-];
+// Пустой массив пользователей для инициализации
+const sampleUsers: any[] = [];
+
+export interface User {
+  id: string;
+  username: string;
+  email: string;
+  password: string;
+  avatar?: string;
+  skills?: string[];
+  currentlyStudying?: string[];
+  experience?: string;
+  specialization?: string;
+  registrationDate: string;
+  aboutMe?: string;
+}
 
 interface AuthContextType {
-  user: any | null;
-  users: any[];
+  user: User | null;
+  users: User[];
   isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<boolean>;
   register: (username: string, email: string, password: string, profileData: any) => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: any) => void;
   deleteAccount: () => Promise<boolean>;
+  forgotPassword: (email: string) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -52,6 +40,7 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   updateUser: () => {},
   deleteAccount: async () => false,
+  forgotPassword: async () => false,
 });
 
 interface AuthProviderProps {
@@ -59,15 +48,15 @@ interface AuthProviderProps {
 }
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
-  const [user, setUser] = useState<any | null>(null);
-  const [users, setUsers] = useState<any[]>([]);
+  const [user, setUser] = useState<User | null>(null);
+  const [users, setUsers] = useState<User[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Initialize with sample users
+    // Инициализация с пустым массивом пользователей
     setUsers(sampleUsers);
 
-    // Check if user is logged in from localStorage
+    // Проверка, авторизован ли пользователь из localStorage
     const storedUser = localStorage.getItem("devnet_user");
     if (storedUser) {
       try {
@@ -83,7 +72,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Find user with matching email and password
+      // Найти пользователя с соответствующим email и паролем
       const foundUser = users.find(
         (u) => u.email === email && u.password === password
       );
@@ -109,13 +98,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profileData: any
   ): Promise<boolean> => {
     try {
-      // Check if user with email already exists
+      // Проверка, существует ли пользователь с таким email
       const existingUser = users.find((u) => u.email === email);
       if (existingUser) {
         return false;
       }
 
-      // Create new user
+      // Создание нового пользователя
       const newUser = {
         id: (users.length + 1).toString(),
         username,
@@ -125,11 +114,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         ...profileData,
       };
 
-      // Add to users list
+      // Добавление в список пользователей
       const updatedUsers = [...users, newUser];
       setUsers(updatedUsers);
       
-      // Auto-login
+      // Автоматический вход
       setUser(newUser);
       setIsAuthenticated(true);
       localStorage.setItem("devnet_user", JSON.stringify(newUser));
@@ -148,27 +137,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const updateUser = (userData: any) => {
-    // Update the current user
+    // Обновление текущего пользователя
     const updatedUser = { ...user, ...userData };
-    setUser(updatedUser);
+    setUser(updatedUser as User);
     localStorage.setItem("devnet_user", JSON.stringify(updatedUser));
 
-    // Update in the users list
+    // Обновление в списке пользователей
     const updatedUsers = users.map((u) =>
-      u.id === user.id ? updatedUser : u
+      u.id === user?.id ? updatedUser : u
     );
-    setUsers(updatedUsers);
+    setUsers(updatedUsers as User[]);
   };
 
   const deleteAccount = async (): Promise<boolean> => {
     try {
       if (!user) return false;
 
-      // Remove user from users list
+      // Удаление пользователя из списка
       const updatedUsers = users.filter((u) => u.id !== user.id);
       setUsers(updatedUsers);
       
-      // Logout
+      // Выход из системы
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem("devnet_user");
@@ -176,6 +165,24 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return true;
     } catch (error) {
       console.error("Delete account error:", error);
+      return false;
+    }
+  };
+
+  const forgotPassword = async (email: string): Promise<boolean> => {
+    try {
+      // В реальном приложении здесь должна быть логика отправки email для сброса пароля
+      // Для демонстрации просто проверяем, существует ли пользователь с таким email
+      const foundUser = users.find((u) => u.email === email);
+      
+      if (foundUser) {
+        console.log(`Сброс пароля для email: ${email}`);
+        return true;
+      }
+      
+      return false;
+    } catch (error) {
+      console.error("Forgot password error:", error);
       return false;
     }
   };
@@ -191,6 +198,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         updateUser,
         deleteAccount,
+        forgotPassword,
       }}
     >
       {children}

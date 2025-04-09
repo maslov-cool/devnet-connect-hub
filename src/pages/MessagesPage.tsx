@@ -12,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 const MessagesPage = () => {
   const { user, users, isAuthenticated } = useAuth();
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, language } = useTranslation();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState(users.filter(u => u.id !== user?.id));
@@ -44,10 +44,10 @@ const MessagesPage = () => {
               <MessageSquare className="h-10 w-10" />
             </div>
             <CardTitle className="text-2xl">
-              {t("language") === "ru" ? "Требуется вход в аккаунт" : "Account login required"}
+              {language === "ru" ? "Требуется вход в аккаунт" : "Account login required"}
             </CardTitle>
             <CardDescription>
-              {t("language") === "ru" ? "Для доступа к сообщениям необходимо войти в систему" : "You need to log in to access messages"}
+              {language === "ru" ? "Для доступа к сообщениям необходимо войти в систему" : "You need to log in to access messages"}
             </CardDescription>
           </CardHeader>
           <CardContent>
