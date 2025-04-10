@@ -7,7 +7,7 @@ import { useNotification } from "../hooks/useNotification";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Send, Paperclip, Smile, Download, FileText } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Smile, Download, FileText, File } from "lucide-react";
 import { toast } from "sonner";
 import EmojiPicker from "./EmojiPicker";
 import {
@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogFooter,
 } from "@/components/ui/dialog";
 
 interface Message {
@@ -27,6 +28,7 @@ interface Message {
     name: string;
     url: string;
     type?: string;
+    caption?: string;
   };
 }
 
@@ -41,6 +43,7 @@ const ChatPage = () => {
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
+  const [fileCaption, setFileCaption] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [filePreviewOpen, setFilePreviewOpen] = useState(false);
   const [previewFile, setPreviewFile] = useState<Message["file"] | null>(null);
@@ -62,6 +65,9 @@ const ChatPage = () => {
       
       // Clear current messages and load conversation for this specific user pair
       if (user && userId) {
+        // Clear messages before loading
+        setMessages([]);
+        
         const conversationKey = [user.id, userId].sort().join('-');
         const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
         
@@ -116,15 +122,18 @@ const ChatPage = () => {
         newMsg.file = {
           name: file.name,
           url: url,
-          type: file.type
+          type: file.type,
+          caption: fileCaption.trim() ? fileCaption : undefined
         };
         
         // Update messages
         const updatedMessages = [...messages, newMsg];
         setMessages(updatedMessages);
         
+        // Clear form
         setNewMessage("");
         setFile(null);
+        setFileCaption("");
         
         // Simulate notification for demo purposes
         if (chatUser) {
@@ -192,14 +201,20 @@ const ChatPage = () => {
   };
 
   const getFileIcon = (fileType?: string) => {
-    if (!fileType) return <FileText size={16} />;
+    if (!fileType) return <File size={16} />;
     
     if (fileType.startsWith('image/')) {
       return null; // Images will be displayed directly
+    } else if (fileType.startsWith('video/')) {
+      return <FileText size={16} />;
+    } else if (fileType.startsWith('audio/')) {
+      return <FileText size={16} />;
+    } else if (fileType.startsWith('application/pdf')) {
+      return <FileText size={16} />;
     }
     
-    // You can add more file type icons here as needed
-    return <FileText size={16} />;
+    // Default file icon for other types
+    return <File size={16} />;
   };
 
   if (!chatUser) return null;
@@ -307,19 +322,19 @@ const ChatPage = () => {
                       {message.file && (
                         <div className="mt-2">
                           <div 
-                            className="bg-white bg-opacity-10 rounded p-2 flex items-center"
+                            className="bg-white bg-opacity-10 rounded p-2 flex items-center cursor-pointer"
                             onClick={() => message.file && handleFilePreview(message.file)}
                           >
                             {message.file.type?.startsWith('image/') ? (
                               <img 
                                 src={message.file.url} 
                                 alt={message.file.name} 
-                                className="max-w-full max-h-60 rounded cursor-pointer" 
+                                className="max-w-full max-h-60 rounded" 
                               />
                             ) : (
-                              <div className="flex items-center space-x-2 text-sm">
+                              <div className="flex items-center space-x-2 text-sm w-full">
                                 {getFileIcon(message.file.type)}
-                                <span className="cursor-pointer hover:underline">
+                                <span className="truncate flex-1">
                                   {message.file.name}
                                 </span>
                                 <Button 
@@ -336,6 +351,9 @@ const ChatPage = () => {
                               </div>
                             )}
                           </div>
+                          {message.file.caption && (
+                            <p className="text-sm mt-1">{message.file.caption}</p>
+                          )}
                           <p className="text-xs mt-1 opacity-70">{message.file.name}</p>
                         </div>
                       )}
@@ -376,9 +394,9 @@ const ChatPage = () => {
               
               <div className="relative flex-1">
                 <Input
-                  placeholder={t("typeMessage")}
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
+                  placeholder={file ? t("addCaption") : t("typeMessage")}
+                  value={file ? fileCaption : newMessage}
+                  onChange={(e) => file ? setFileCaption(e.target.value) : setNewMessage(e.target.value)}
                   onKeyDown={handleKeyDown}
                   className="flex-1 pr-10"
                 />
@@ -393,7 +411,7 @@ const ChatPage = () => {
                 </Button>
                 
                 {showEmojiPicker && (
-                  <div className="absolute bottom-full right-0 mb-2">
+                  <div className="absolute bottom-full right-0 mb-2 z-20">
                     <EmojiPicker onEmojiSelect={addEmoji} />
                   </div>
                 )}
@@ -434,25 +452,35 @@ const ChatPage = () => {
           
           <div className="flex flex-col items-center justify-center py-4">
             {previewFile && previewFile.type?.startsWith('image/') ? (
-              <img 
-                src={previewFile.url} 
-                alt={previewFile.name} 
-                className="max-w-full max-h-[70vh]" 
-              />
+              <div>
+                <img 
+                  src={previewFile.url} 
+                  alt={previewFile.name} 
+                  className="max-w-full max-h-[70vh]" 
+                />
+                {previewFile.caption && (
+                  <p className="text-center mt-2">{previewFile.caption}</p>
+                )}
+              </div>
             ) : (
               <div className="text-center">
                 <FileText size={64} className="mx-auto mb-4" />
-                <p>{previewFile?.name}</p>
+                <p className="text-lg font-medium">{previewFile?.name}</p>
+                {previewFile?.caption && (
+                  <p className="mt-2">{previewFile.caption}</p>
+                )}
               </div>
             )}
             
-            <Button 
-              onClick={() => previewFile && handleFileDownload(previewFile)}
-              className="mt-4 bg-blue-900 hover:bg-blue-800"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              {t("language") === "ru" ? "Скачать файл" : "Download file"}
-            </Button>
+            <DialogFooter className="w-full mt-4">
+              <Button 
+                onClick={() => previewFile && handleFileDownload(previewFile)}
+                className="w-full bg-blue-900 hover:bg-blue-800"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {t("language") === "ru" ? "Скачать файл" : "Download file"}
+              </Button>
+            </DialogFooter>
           </div>
         </DialogContent>
       </Dialog>
@@ -461,3 +489,4 @@ const ChatPage = () => {
 };
 
 export default ChatPage;
+

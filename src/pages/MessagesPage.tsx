@@ -6,7 +6,7 @@ import { useTranslation } from "../hooks/useTranslation";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Search, MessageSquare } from "lucide-react";
+import { Search, MessageSquare, FileText, Image } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
 const MessagesPage = () => {
@@ -46,7 +46,21 @@ const MessagesPage = () => {
           const parsedMessages = JSON.parse(savedMessages);
           if (parsedMessages.length > 0) {
             const lastMessage = parsedMessages[parsedMessages.length - 1];
-            const content = lastMessage.content || (lastMessage.file ? "🖼️" : "");
+            
+            if (lastMessage.file) {
+              const fileType = lastMessage.file.type || "";
+              if (fileType.startsWith("image/")) {
+                return lastMessage.file.caption || "🖼️ " + t("image");
+              } else if (fileType.startsWith("video/")) {
+                return lastMessage.file.caption || "🎥 " + t("video");
+              } else if (fileType.startsWith("audio/")) {
+                return lastMessage.file.caption || "🎵 " + t("audio");
+              } else {
+                return lastMessage.file.caption || "📎 " + t("file");
+              }
+            }
+            
+            const content = lastMessage.content || "";
             
             // Truncate message if too long
             return content.length > 25 ? content.substring(0, 25) + "..." : content;
@@ -81,6 +95,34 @@ const MessagesPage = () => {
       }
     }
     return "";
+  };
+
+  // Get file icon for preview
+  const getFileIcon = (userId: string) => {
+    if (user) {
+      const conversationKey = [user.id, userId].sort().join('-');
+      const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
+      
+      if (savedMessages) {
+        try {
+          const parsedMessages = JSON.parse(savedMessages);
+          if (parsedMessages.length > 0) {
+            const lastMessage = parsedMessages[parsedMessages.length - 1];
+            if (lastMessage.file) {
+              const fileType = lastMessage.file.type || "";
+              if (fileType.startsWith("image/")) {
+                return <Image size={14} className="mr-1" />;
+              } else {
+                return <FileText size={14} className="mr-1" />;
+              }
+            }
+          }
+        } catch (error) {
+          console.error("Error parsing saved messages:", error);
+        }
+      }
+    }
+    return null;
   };
 
   return (
@@ -140,7 +182,8 @@ const MessagesPage = () => {
                         <p className="font-medium truncate">{chatUser.username}</p>
                         <p className="text-xs text-muted-foreground whitespace-nowrap">{getLastMessageDate(chatUser.id)}</p>
                       </div>
-                      <p className="text-sm text-muted-foreground truncate">
+                      <p className="text-sm text-muted-foreground truncate flex items-center">
+                        {getFileIcon(chatUser.id)}
                         {getMessagePreview(chatUser.id)}
                       </p>
                     </div>
