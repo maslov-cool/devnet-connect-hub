@@ -8,7 +8,7 @@ interface NotificationContextType {
   newMessageNotification: (sender: string, message: string) => void;
 }
 
-const NotificationContext = createContext<NotificationContextType>({
+export const NotificationContext = createContext<NotificationContextType>({
   showNotification: () => {},
   newMessageNotification: () => {},
 });
