@@ -7,24 +7,38 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+
+const programmingLanguages = [
+  "JavaScript", "TypeScript", "Python", "Java", "C#", "C++", "PHP", "Ruby", "Swift", 
+  "Kotlin", "Go", "Rust", "Dart", "Scala", "Haskell", "Elixir", "Clojure", 
+  "Objective-C", "R", "MATLAB", "Lua", "Perl", "Shell", "SQL", "HTML/CSS"
+];
 
 const RegisterPage = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [vkLink, setVkLink] = useState("");
   const [telegramLink, setTelegramLink] = useState("");
   const [githubLink, setGithubLink] = useState("");
-  const [skills, setSkills] = useState("");
+  const [selectedLanguages, setSelectedLanguages] = useState<string[]>([]);
   const [experience, setExperience] = useState("0-1");
-  const [specialization, setSpecialization] = useState("");
-  const [aboutMe, setAboutMe] = useState("");
+  const [itPosition, setITPosition] = useState("");
+  const [projects, setProjects] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [useRandomAvatar, setUseRandomAvatar] = useState(false);
+  const [skipAvatar, setSkipAvatar] = useState(false);
   
   const { register } = useAuth();
   const navigate = useNavigate();
@@ -33,7 +47,7 @@ const RegisterPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !email || !password || !confirmPassword || !skills || !experience || !specialization || !aboutMe) {
+    if (!username || !email || !password || !confirmPassword || selectedLanguages.length === 0 || !experience || !itPosition || !projects) {
       toast.error(t("language") === "ru" ? "Пожалуйста, заполните все обязательные поля" : "Please fill in all required fields");
       return;
     }
@@ -46,24 +60,25 @@ const RegisterPage = () => {
     setIsLoading(true);
     
     try {
-      // Преобразуем навыки в массив
-      const skillsArray = skills.split(',').map(skill => skill.trim()).filter(Boolean);
-      
       // Дополнительные данные профиля
       const profileData = {
-        vkLink,
         telegramLink,
         githubLink,
-        skills: skillsArray,
+        languages: selectedLanguages,
         experience,
-        specialization,
-        aboutMe
+        itPosition,
+        projects,
+        useRandomAvatar,
+        skipAvatar
       };
       
       const success = await register(username, email, password, profileData);
       
       if (success) {
-        navigate("/");
+        toast.success(t("language") === "ru" 
+          ? "Регистрация успешна! Проверьте вашу почту для подтверждения аккаунта." 
+          : "Registration successful! Check your email to verify your account.");
+        navigate("/email-verification");
       }
     } catch (error) {
       console.error(error);
@@ -76,7 +91,24 @@ const RegisterPage = () => {
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files && e.target.files[0]) {
       setSelectedFile(e.target.files[0]);
+      setUseRandomAvatar(false);
+      setSkipAvatar(false);
     }
+  };
+  
+  const generateRandomAvatar = () => {
+    setUseRandomAvatar(true);
+    setSelectedFile(null);
+    setSkipAvatar(false);
+    toast.success(t("language") === "ru" ? "Аватар будет сгенерирован автоматически" : "Avatar will be generated automatically");
+  };
+
+  const handleLanguageToggle = (language: string) => {
+    setSelectedLanguages(prev => 
+      prev.includes(language) 
+        ? prev.filter(l => l !== language)
+        : [...prev, language]
+    );
   };
   
   return (
@@ -110,6 +142,10 @@ const RegisterPage = () => {
                       alt="Profile" 
                       className="w-full h-full object-cover"
                     />
+                  ) : useRandomAvatar ? (
+                    <div className="flex items-center justify-center w-full h-full bg-blue-100 dark:bg-blue-900">
+                      <RefreshCw className="w-8 h-8 text-blue-500 dark:text-blue-200" />
+                    </div>
                   ) : (
                     <span className="text-xs text-center text-muted-foreground p-2">
                       {t("language") === "ru" ? "Нажмите, чтобы загрузить аватар" : "Click to upload avatar"}
@@ -120,8 +156,43 @@ const RegisterPage = () => {
                     accept="image/*"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={handleFileChange}
-                    required
                   />
+                </div>
+              </div>
+              <div className="flex justify-center space-x-4 mt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="generate-avatar"
+                    checked={useRandomAvatar}
+                    onCheckedChange={() => generateRandomAvatar()}
+                  />
+                  <label 
+                    htmlFor="generate-avatar" 
+                    className="text-sm cursor-pointer"
+                  >
+                    {t("language") === "ru" ? "Сгенерировать" : "Generate"}
+                  </label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox 
+                    id="skip-avatar"
+                    checked={skipAvatar}
+                    onCheckedChange={(checked) => {
+                      if (checked) {
+                        setSkipAvatar(true);
+                        setUseRandomAvatar(false);
+                        setSelectedFile(null);
+                      } else {
+                        setSkipAvatar(false);
+                      }
+                    }}
+                  />
+                  <label 
+                    htmlFor="skip-avatar" 
+                    className="text-sm cursor-pointer"
+                  >
+                    {t("language") === "ru" ? "Без аватара" : "Skip avatar"}
+                  </label>
                 </div>
               </div>
             </div>
@@ -157,29 +228,16 @@ const RegisterPage = () => {
             </div>
             
             <div>
-              <label htmlFor="aboutMe" className="block text-sm font-medium mb-1">
-                {t("aboutMe")} *
+              <label htmlFor="projects" className="block text-sm font-medium mb-1">
+                {t("language") === "ru" ? "Расскажи о своих проектах" : "Tell us about your projects"} *
               </label>
               <Textarea
-                id="aboutMe"
-                value={aboutMe}
-                onChange={(e) => setAboutMe(e.target.value)}
-                placeholder={t("language") === "ru" ? "Расскажите о себе" : "Tell us about yourself"}
+                id="projects"
+                value={projects}
+                onChange={(e) => setProjects(e.target.value)}
+                placeholder={t("language") === "ru" ? "Расскажите о проектах, над которыми вы работали" : "Tell us about projects you've worked on"}
                 rows={3}
                 required
-              />
-            </div>
-            
-            <div>
-              <label htmlFor="vk" className="block text-sm font-medium mb-1">
-                {t("vkLink")}
-              </label>
-              <Input
-                id="vk"
-                type="text"
-                value={vkLink}
-                onChange={(e) => setVkLink(e.target.value)}
-                placeholder="https://vk.com/username"
               />
             </div>
             
@@ -210,20 +268,33 @@ const RegisterPage = () => {
             </div>
             
             <div>
-              <label htmlFor="skills" className="block text-sm font-medium mb-1">
-                {t("skills")} *
+              <label className="block text-sm font-medium mb-1">
+                {t("language") === "ru" ? "Языки программирования" : "Programming Languages"} *
               </label>
-              <Input
-                id="skills"
-                type="text"
-                value={skills}
-                onChange={(e) => setSkills(e.target.value)}
-                placeholder="React, JavaScript, TypeScript..."
-                required
-              />
-              <p className="text-xs text-muted-foreground mt-1">
-                {t("language") === "ru" ? "Разделяйте навыки запятыми" : "Separate skills with commas"}
-              </p>
+              <div className="grid grid-cols-2 md:grid-cols-3 gap-2 max-h-40 overflow-y-auto p-2 border rounded-md">
+                {programmingLanguages.map(language => (
+                  <div key={language} className="flex items-center space-x-2">
+                    <Checkbox 
+                      id={`lang-${language}`}
+                      checked={selectedLanguages.includes(language)}
+                      onCheckedChange={() => handleLanguageToggle(language)}
+                    />
+                    <label 
+                      htmlFor={`lang-${language}`} 
+                      className="text-sm cursor-pointer"
+                    >
+                      {language}
+                    </label>
+                  </div>
+                ))}
+              </div>
+              {selectedLanguages.length > 0 && (
+                <p className="text-xs text-muted-foreground mt-1">
+                  {t("language") === "ru" 
+                    ? `Выбрано: ${selectedLanguages.length}` 
+                    : `Selected: ${selectedLanguages.length}`}
+                </p>
+              )}
             </div>
             
             <div>
@@ -244,15 +315,15 @@ const RegisterPage = () => {
             </div>
             
             <div>
-              <label htmlFor="specialization" className="block text-sm font-medium mb-1">
-                {t("specialization")} *
+              <label htmlFor="itPosition" className="block text-sm font-medium mb-1">
+                {t("language") === "ru" ? "Какую позицию в IT занимаешь?" : "What IT position do you hold?"} *
               </label>
               <Textarea
-                id="specialization"
-                value={specialization}
-                onChange={(e) => setSpecialization(e.target.value)}
-                placeholder={t("language") === "ru" ? "Опишите ваше основное направление разработки" : "Describe your main development direction"}
-                rows={3}
+                id="itPosition"
+                value={itPosition}
+                onChange={(e) => setITPosition(e.target.value)}
+                placeholder={t("language") === "ru" ? "Опишите вашу текущую или желаемую IT позицию" : "Describe your current or desired IT position"}
+                rows={2}
                 required
               />
             </div>

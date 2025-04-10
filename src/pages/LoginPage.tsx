@@ -96,6 +96,15 @@ const LoginPage = () => {
                 />
               </div>
               
+              <div className="flex justify-end">
+                <Link
+                  to="/forgot-password"
+                  className="text-sm text-blue-900 dark:text-blue-300 hover:underline"
+                >
+                  {t("language") === "ru" ? "Забыли пароль?" : "Forgot password?"}
+                </Link>
+              </div>
+              
               <Button type="submit" className="w-full bg-blue-900 hover:bg-blue-800" disabled={isLoading}>
                 {isLoading ? (
                   <span className="flex items-center gap-2">

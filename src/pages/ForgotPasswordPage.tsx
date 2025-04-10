@@ -7,6 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { toast } from "sonner";
+import { ArrowLeft } from "lucide-react";
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("");
@@ -31,6 +32,13 @@ const ForgotPasswordPage = () => {
       
       if (success) {
         setIsSent(true);
+        toast.success(t("language") === "ru" 
+          ? "Инструкции по сбросу пароля отправлены на вашу почту" 
+          : "Password reset instructions have been sent to your email");
+      } else {
+        toast.error(t("language") === "ru" 
+          ? "Пользователь с таким email не найден" 
+          : "User with this email not found");
       }
     } catch (error) {
       console.error(error);
@@ -44,11 +52,15 @@ const ForgotPasswordPage = () => {
     <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <Link to="/" className="flex items-center justify-center space-x-2 mb-4">
-            <div className="bg-brand-DEFAULT text-white w-10 h-10 rounded flex items-center justify-center text-xl font-bold">
-              D
-            </div>
-            <span className="text-xl font-bold">DevNet</span>
+          <Link to="/login" className="flex justify-start w-full mb-2">
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              className="text-blue-900 dark:text-blue-300 hover:text-blue-600"
+            >
+              <ArrowLeft className="mr-1 h-4 w-4" />
+              {t("language") === "ru" ? "Назад к входу" : "Back to login"}
+            </Button>
           </Link>
           <CardTitle>{t("resetPassword")}</CardTitle>
           <CardDescription>
@@ -111,6 +123,12 @@ const ForgotPasswordPage = () => {
                     : "Password reset instructions have been sent to your email"
                   }
                 </p>
+                <p className="text-sm mt-2">
+                  {t("language") === "ru" 
+                    ? "Пожалуйста, проверьте вашу почту и следуйте инструкциям"
+                    : "Please check your email and follow the instructions"
+                  }
+                </p>
               </div>
               <Button asChild>
                 <Link to="/login">{t("login")}</Link>
@@ -120,7 +138,11 @@ const ForgotPasswordPage = () => {
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            <Link to="/login" className="text-brand-DEFAULT hover:underline">
+            {t("language") === "ru" 
+              ? "Вспомнили пароль? "
+              : "Remembered your password? "
+            }
+            <Link to="/login" className="text-blue-900 dark:text-blue-300 hover:underline">
               {t("language") === "ru" ? "Вернуться к входу" : "Back to login"}
             </Link>
           </p>

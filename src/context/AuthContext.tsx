@@ -11,12 +11,15 @@ export interface User {
   email: string;
   password: string;
   avatar?: string;
-  skills?: string[];
+  languages?: string[];
   currentlyStudying?: string[];
   experience?: string;
-  specialization?: string;
+  itPosition?: string;
   registrationDate: string;
-  aboutMe?: string;
+  projects?: string;
+  isEmailVerified?: boolean;
+  telegramLink?: string;
+  githubLink?: string;
 }
 
 interface AuthContextType {
@@ -29,6 +32,8 @@ interface AuthContextType {
   updateUser: (userData: any) => void;
   deleteAccount: () => Promise<boolean>;
   forgotPassword: (email: string) => Promise<boolean>;
+  resetPassword: (email: string, newPassword: string, token: string) => Promise<boolean>;
+  verifyEmail: (email: string, token: string) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -41,6 +46,8 @@ export const AuthContext = createContext<AuthContextType>({
   updateUser: () => {},
   deleteAccount: async () => false,
   forgotPassword: async () => false,
+  resetPassword: async () => false,
+  verifyEmail: async () => false,
 });
 
 interface AuthProviderProps {
@@ -53,8 +60,22 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   useEffect(() => {
-    // Инициализация с пустым массивом пользователей
-    setUsers(sampleUsers);
+    // Загрузка пользователей из localStorage при инициализации
+    const storedUsers = localStorage.getItem("devnet_users");
+    if (storedUsers) {
+      try {
+        const parsedUsers = JSON.parse(storedUsers);
+        setUsers(parsedUsers);
+      } catch (error) {
+        console.error("Error parsing stored users:", error);
+        localStorage.setItem("devnet_users", JSON.stringify(sampleUsers));
+        setUsers(sampleUsers);
+      }
+    } else {
+      // Если нет сохраненных пользователей, инициализируем пустым массивом
+      localStorage.setItem("devnet_users", JSON.stringify(sampleUsers));
+      setUsers(sampleUsers);
+    }
 
     // Проверка, авторизован ли пользователь из localStorage
     const storedUser = localStorage.getItem("devnet_user");
@@ -70,6 +91,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
+  // Сохранение пользователей в localStorage при изменении массива пользователей
+  useEffect(() => {
+    if (users.length > 0) {
+      localStorage.setItem("devnet_users", JSON.stringify(users));
+    }
+  }, [users]);
+
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
       // Найти пользователя с соответствующим email и паролем
@@ -78,6 +106,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       );
 
       if (foundUser) {
+        // Проверяем, подтвержден ли email
+        if (foundUser.isEmailVerified === false) {
+          toast.error("Пожалуйста, подтвердите ваш email перед входом");
+          return false;
+        }
+
         setUser(foundUser);
         setIsAuthenticated(true);
         localStorage.setItem("devnet_user", JSON.stringify(foundUser));
@@ -101,6 +135,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Проверка, существует ли пользователь с таким email
       const existingUser = users.find((u) => u.email === email);
       if (existingUser) {
+        toast.error("Пользователь с таким email уже существует");
         return false;
       }
 
@@ -111,21 +146,53 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         email,
         password,
         registrationDate: new Date().toISOString().split("T")[0],
-        ...profileData,
+        isEmailVerified: false, // По умолчанию email не подтвержден
+        telegramLink: profileData.telegramLink || "",
+        githubLink: profileData.githubLink || "",
+        languages: profileData.languages || [],
+        experience: profileData.experience || "0-1",
+        itPosition: profileData.itPosition || "",
+        projects: profileData.projects || "",
       };
 
       // Добавление в список пользователей
       const updatedUsers = [...users, newUser];
       setUsers(updatedUsers);
       
-      // Автоматический вход
-      setUser(newUser);
-      setIsAuthenticated(true);
-      localStorage.setItem("devnet_user", JSON.stringify(newUser));
-
+      // Здесь в реальном приложении был бы код отправки email
+      console.log(`Отправка письма для подтверждения на: ${email}`);
+      
       return true;
     } catch (error) {
       console.error("Registration error:", error);
+      return false;
+    }
+  };
+
+  const verifyEmail = async (email: string, token: string): Promise<boolean> => {
+    try {
+      // В реальном приложении здесь была бы проверка токена
+      // Для демонстрации просто обновляем статус верификации пользователя
+      
+      const updatedUsers = users.map(user => {
+        if (user.email === email) {
+          return { ...user, isEmailVerified: true };
+        }
+        return user;
+      });
+      
+      setUsers(updatedUsers);
+      
+      // Если текущий пользователь - это тот, чей email подтверждается
+      if (user && user.email === email) {
+        const updatedUser = { ...user, isEmailVerified: true };
+        setUser(updatedUser);
+        localStorage.setItem("devnet_user", JSON.stringify(updatedUser));
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Email verification error:", error);
       return false;
     }
   };
@@ -171,18 +238,47 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const forgotPassword = async (email: string): Promise<boolean> => {
     try {
-      // В реальном приложении здесь должна быть логика отправки email для сброса пароля
-      // Для демонстрации просто проверяем, существует ли пользователь с таким email
+      // Проверяем, существует ли пользователь с таким email
       const foundUser = users.find((u) => u.email === email);
       
-      if (foundUser) {
-        console.log(`Сброс пароля для email: ${email}`);
-        return true;
+      if (!foundUser) {
+        return false;
       }
       
-      return false;
+      // В реальном приложении здесь был бы код отправки email со ссылкой для сброса пароля
+      console.log(`Отправка письма для сброса пароля на: ${email}`);
+      
+      return true;
     } catch (error) {
       console.error("Forgot password error:", error);
+      return false;
+    }
+  };
+
+  const resetPassword = async (email: string, newPassword: string, token: string): Promise<boolean> => {
+    try {
+      // В реальном приложении здесь была бы проверка токена
+      
+      // Обновляем пароль пользователя
+      const updatedUsers = users.map(user => {
+        if (user.email === email) {
+          return { ...user, password: newPassword };
+        }
+        return user;
+      });
+      
+      setUsers(updatedUsers);
+      
+      // Если текущий пользователь - это тот, чей пароль меняется
+      if (user && user.email === email) {
+        const updatedUser = { ...user, password: newPassword };
+        setUser(updatedUser);
+        localStorage.setItem("devnet_user", JSON.stringify(updatedUser));
+      }
+      
+      return true;
+    } catch (error) {
+      console.error("Reset password error:", error);
       return false;
     }
   };
@@ -199,6 +295,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         updateUser,
         deleteAccount,
         forgotPassword,
+        resetPassword,
+        verifyEmail,
       }}
     >
       {children}

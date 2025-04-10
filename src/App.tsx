@@ -14,6 +14,9 @@ import ProfilePage from "./pages/ProfilePage";
 import LoginPage from "./pages/LoginPage";
 import RegisterPage from "./pages/RegisterPage";
 import ForgotPasswordPage from "./pages/ForgotPasswordPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import EmailVerificationPage from "./pages/EmailVerificationPage";
+import EmailConfirmationPage from "./pages/EmailConfirmationPage";
 import NotFound from "./pages/NotFound";
 import ChatPage from "./pages/ChatPage";
 import SettingsPage from "./pages/SettingsPage";
@@ -37,6 +40,9 @@ const App = () => (
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/email-verification" element={<EmailVerificationPage />} />
+                  <Route path="/email-confirm" element={<EmailConfirmationPage />} />
                   <Route path="/" element={<Layout />}>
                     <Route index element={<Index />} />
                     <Route path="messages" element={<MessagesPage />} />
