@@ -19,6 +19,7 @@ import ChatPage from "./pages/ChatPage";
 import SettingsPage from "./pages/SettingsPage";
 import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
+import { NotificationProvider } from "./context/NotificationContext";
 
 const queryClient = new QueryClient();
 
@@ -27,27 +28,29 @@ const App = () => (
     <ThemeProvider defaultTheme="light" storageKey="devnet-theme">
       <LanguageProvider>
         <AuthProvider>
-          <TooltipProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/register" element={<RegisterPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/" element={<Layout />}>
-                  <Route index element={<Index />} />
-                  <Route path="messages" element={<MessagesPage />} />
-                  <Route path="messages/:userId" element={<ChatPage />} />
-                  <Route path="about" element={<AboutCreatorsPage />} />
-                  <Route path="for-developers" element={<ForDevelopersPage />} />
-                  <Route path="profile/:id" element={<ProfilePage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                </Route>
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </BrowserRouter>
-          </TooltipProvider>
+          <NotificationProvider>
+            <TooltipProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/" element={<Layout />}>
+                    <Route index element={<Index />} />
+                    <Route path="messages" element={<MessagesPage />} />
+                    <Route path="messages/:userId" element={<ChatPage />} />
+                    <Route path="about" element={<AboutCreatorsPage />} />
+                    <Route path="for-developers" element={<ForDevelopersPage />} />
+                    <Route path="profile/:id" element={<ProfilePage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                  </Route>
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </BrowserRouter>
+            </TooltipProvider>
+          </NotificationProvider>
         </AuthProvider>
       </LanguageProvider>
     </ThemeProvider>

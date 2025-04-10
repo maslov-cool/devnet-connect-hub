@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { ArrowLeft } from "lucide-react";
 
 const LoginPage = () => {
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
@@ -21,22 +21,25 @@ const LoginPage = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!username || !password) {
-      toast.error(t("Пожалуйста, заполните все поля"));
+    if (!email || !password) {
+      toast.error(t("language") === "ru" ? "Пожалуйста, заполните все поля" : "Please fill in all fields");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      const success = await login(username, password);
+      const success = await login(email, password);
       
       if (success) {
+        toast.success(t("language") === "ru" ? "Успешный вход" : "Login successful");
         navigate("/");
+      } else {
+        toast.error(t("language") === "ru" ? "Неверный email или пароль" : "Invalid email or password");
       }
     } catch (error) {
       console.error(error);
-      toast.error(t("Произошла ошибка при входе"));
+      toast.error(t("language") === "ru" ? "Произошла ошибка при входе" : "An error occurred during login");
     } finally {
       setIsLoading(false);
     }
@@ -59,23 +62,23 @@ const LoginPage = () => {
           </div>
           <CardTitle>{t("login")}</CardTitle>
           <CardDescription>
-            {t("Войдите в свой аккаунт для доступа к DevNet")}
+            {t("language") === "ru" ? "Войдите в свой аккаунт для доступа к DevNet" : "Login to your account to access DevNet"}
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit}>
             <div className="space-y-4">
               <div>
-                <label htmlFor="username" className="block text-sm font-medium mb-1">
-                  {t("username")}
+                <label htmlFor="email" className="block text-sm font-medium mb-1">
+                  {t("language") === "ru" ? "Email" : "Email"}
                 </label>
                 <Input
-                  id="username"
-                  type="text"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  placeholder={t("Введите имя пользователя")}
-                  autoComplete="username"
+                  id="email"
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder={t("language") === "ru" ? "Введите email" : "Enter email"}
+                  autoComplete="email"
                 />
               </div>
               
@@ -88,7 +91,7 @@ const LoginPage = () => {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t("Введите пароль")}
+                  placeholder={t("language") === "ru" ? "Введите пароль" : "Enter password"}
                   autoComplete="current-password"
                 />
               </div>
@@ -111,7 +114,7 @@ const LoginPage = () => {
                         d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                       ></path>
                     </svg>
-                    {t("Загрузка...")}
+                    {t("language") === "ru" ? "Загрузка..." : "Loading..."}
                   </span>
                 ) : (
                   t("login")
@@ -122,7 +125,7 @@ const LoginPage = () => {
         </CardContent>
         <CardFooter className="flex justify-center">
           <p className="text-sm text-muted-foreground">
-            {t("Нет аккаунта? ")}
+            {t("language") === "ru" ? "Нет аккаунта? " : "Don't have an account? "}
             <Link to="/register" className="text-blue-900 dark:text-blue-300 hover:underline">
               {t("register")}
             </Link>

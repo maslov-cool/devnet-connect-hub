@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertTriangle } from "lucide-react";
 
 const SettingsPage = () => {
   const { user, deleteAccount } = useAuth();
@@ -52,9 +54,23 @@ const SettingsPage = () => {
       <h1 className="text-3xl font-bold mb-8">{t("settings")}</h1>
 
       <div className="grid gap-6">
+        <Alert variant="destructive" className="mb-6">
+          <AlertTriangle className="h-4 w-4" />
+          <AlertTitle>
+            {t("language") === "ru" ? "Опасная зона" : "Danger Zone"}
+          </AlertTitle>
+          <AlertDescription>
+            {t("language") === "ru" 
+              ? "Действия в этой секции необратимы. Будьте осторожны." 
+              : "Actions in this section are irreversible. Proceed with caution."}
+          </AlertDescription>
+        </Alert>
+        
         <Card className="shadow-sm">
           <CardHeader>
-            <CardTitle className="text-red-600 dark:text-red-400">{t("deleteProfile")}</CardTitle>
+            <CardTitle className="text-red-600 dark:text-red-400">
+              {t("language") === "ru" ? "Удаление аккаунта" : "Delete Account"}
+            </CardTitle>
             <CardDescription>
               {t("language") === "ru" 
                 ? "Удаление аккаунта необратимо. Вся информация будет потеряна."
@@ -64,7 +80,9 @@ const SettingsPage = () => {
           <CardContent>
             <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
               <DialogTrigger asChild>
-                <Button variant="destructive">{t("deleteProfile")}</Button>
+                <Button variant="destructive">
+                  {t("language") === "ru" ? "Удалить аккаунт" : "Delete Account"}
+                </Button>
               </DialogTrigger>
               <DialogContent>
                 <DialogHeader>
@@ -85,7 +103,7 @@ const SettingsPage = () => {
                     onClick={() => setDeleteDialogOpen(false)}
                     disabled={isDeleting}
                   >
-                    {t("cancel")}
+                    {t("language") === "ru" ? "Отмена" : "Cancel"}
                   </Button>
                   <Button 
                     variant="destructive" 

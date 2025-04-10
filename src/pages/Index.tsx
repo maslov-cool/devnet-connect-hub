@@ -1,5 +1,4 @@
 
-import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuth } from "../hooks/useAuth";
@@ -9,21 +8,21 @@ import { Search } from "lucide-react";
 import DeveloperCard from "../components/DeveloperCard";
 
 const Index = () => {
-  const navigate = useNavigate();
   const { t } = useTranslation();
   const { users, user } = useAuth();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState(users.filter(u => u.id !== user?.id));
+  const [filteredUsers, setFilteredUsers] = useState(users);
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
-      setFilteredUsers(users.filter(u => u.id !== user?.id));
+      // Show all users except current user (if logged in)
+      setFilteredUsers(user ? users.filter(u => u.id !== user.id) : users);
     } else {
       const query = searchQuery.toLowerCase();
       const filtered = users.filter(
         (u) =>
-          u.id !== user?.id &&
+          (user ? u.id !== user.id : true) &&
           (u.username.toLowerCase().includes(query) ||
             (u.skills && u.skills.some((skill) => skill.toLowerCase().includes(query))))
       );
@@ -44,9 +43,17 @@ const Index = () => {
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredUsers.map((developer) => (
-          <DeveloperCard key={developer.id} developer={developer} />
-        ))}
+        {filteredUsers.length > 0 ? (
+          filteredUsers.map((developer) => (
+            <DeveloperCard key={developer.id} developer={developer} />
+          ))
+        ) : (
+          <div className="col-span-2 text-center py-8">
+            {t("language") === "ru" 
+              ? "Разработчиков не найдено" 
+              : "No developers found"}
+          </div>
+        )}
       </div>
     </div>
   );
