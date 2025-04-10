@@ -3,6 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
+import { useNotification } from "../hooks/useNotification";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,7 +19,12 @@ interface Message {
   file?: {
     name: string;
     url: string;
+    type?: string;
   };
+}
+
+interface MessagesByUser {
+  [userId: string]: Message[];
 }
 
 const ChatPage = () => {
@@ -26,41 +32,27 @@ const ChatPage = () => {
   const { user, users, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+  const { newMessageNotification } = useNotification();
   
   const [chatUser, setChatUser] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
+  const [allMessages, setAllMessages] = useState<MessagesByUser>({});
   const [newMessage, setNewMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatUserRef = useRef<any>(null);
+  const chatUserRef = useRef<string | undefined>("");
 
-  // Sample messages for demo purposes
-  const demoMessages: {[key: string]: Message[]} = {
+  // Sample messages structure - stored by user ID
+  const demoMessages: MessagesByUser = {
     "1": [
       {
         id: "1",
         sender: "1",
         content: "Привет",
         timestamp: new Date("2025-04-09T15:24:00")
-      },
-      {
-        id: "2",
-        sender: "1",
-        content: "😃приверрр",
-        timestamp: new Date("2025-04-09T15:24:00")
-      },
-      {
-        id: "3",
-        sender: "1",
-        file: {
-          name: "1.png",
-          url: "/lovable-uploads/33d8adec-dc34-48bb-893c-a7647f8d1abf.png"
-        },
-        content: "",
-        timestamp: new Date("2025-04-09T15:25:00")
       }
     ],
     "2": [
@@ -79,22 +71,30 @@ const ChatPage = () => {
       return;
     }
 
+    // Initialize messages from demo data if none exist yet
+    if (Object.keys(allMessages).length === 0) {
+      setAllMessages(demoMessages);
+    }
+
+    // Save previous userId reference
+    const prevUserId = chatUserRef.current;
     chatUserRef.current = userId;
 
+    // Update messages for the selected user
     const foundUser = users.find(u => u.id === userId);
     if (foundUser) {
       setChatUser(foundUser);
       
-      // Set demo messages based on user ID
-      if (demoMessages[foundUser.id]) {
-        setMessages(demoMessages[foundUser.id]);
+      // Load messages for this specific user
+      if (allMessages[userId as string]) {
+        setMessages(allMessages[userId as string]);
       } else {
         setMessages([]);
       }
     } else {
       navigate("/messages");
     }
-  }, [userId, users, isAuthenticated, navigate]);
+  }, [userId, users, isAuthenticated, navigate, allMessages]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
@@ -102,10 +102,10 @@ const ChatPage = () => {
   }, [messages]);
 
   const handleSendMessage = () => {
-    if ((!newMessage.trim() && !file) || !user) return;
+    if ((!newMessage.trim() && !file) || !user || !userId) return;
     
     const newMsg: Message = {
-      id: (messages.length + 1).toString(),
+      id: Date.now().toString(),
       sender: user.id,
       content: newMessage,
       timestamp: new Date(),
@@ -113,28 +113,49 @@ const ChatPage = () => {
     
     if (file) {
       const reader = new FileReader();
-      reader.onload = (event) => {
-        if (event.target?.result) {
-          newMsg.file = {
-            name: file.name,
-            url: URL.createObjectURL(file)
-          };
-          setMessages([...messages, newMsg]);
-          setNewMessage("");
-          setFile(null);
-        }
+      reader.onload = () => {
+        // Create object URL for the file
+        const url = URL.createObjectURL(file);
+        newMsg.file = {
+          name: file.name,
+          url: url,
+          type: file.type
+        };
+        
+        // Update messages both in current view and in the global state
+        const updatedMessages = [...messages, newMsg];
+        setMessages(updatedMessages);
+        
+        // Update in the global messages store
+        setAllMessages(prev => ({
+          ...prev,
+          [userId]: updatedMessages
+        }));
+        
+        setNewMessage("");
+        setFile(null);
       };
       reader.readAsDataURL(file);
     } else {
-      setMessages([...messages, newMsg]);
+      // Text-only message
+      const updatedMessages = [...messages, newMsg];
+      setMessages(updatedMessages);
+      
+      // Update in the global messages store
+      setAllMessages(prev => ({
+        ...prev,
+        [userId]: updatedMessages
+      }));
+      
       setNewMessage("");
     }
-
-    // Add message to demo messages for this user
-    if (!demoMessages[chatUserRef.current]) {
-      demoMessages[chatUserRef.current] = [];
+    
+    // Simulate notification for demo purposes
+    if (chatUser) {
+      setTimeout(() => {
+        newMessageNotification(user.username, newMessage || "Отправил(а) файл");
+      }, 1500);
     }
-    demoMessages[chatUserRef.current].push(newMsg);
   };
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
@@ -187,7 +208,9 @@ const ChatPage = () => {
                     <p className="text-xs text-muted-foreground whitespace-nowrap">9 Apr</p>
                   </div>
                   <p className="text-sm text-muted-foreground truncate">
-                    {demoMessages[chatUser.id]?.length > 0 ? demoMessages[chatUser.id][demoMessages[chatUser.id].length - 1].content || "🖼️" : ""}
+                    {allMessages[chatUser.id]?.length > 0 
+                      ? (allMessages[chatUser.id][allMessages[chatUser.id].length - 1].content || "🖼️") 
+                      : ""}
                   </p>
                 </div>
               </Link>
@@ -239,11 +262,25 @@ const ChatPage = () => {
                       {message.file && (
                         <div className="mt-2">
                           <div className="bg-white bg-opacity-10 rounded p-2 flex items-center">
-                            <img 
-                              src={message.file.url} 
-                              alt={message.file.name} 
-                              className="max-w-full max-h-60 rounded" 
-                            />
+                            {message.file.type?.startsWith('image/') ? (
+                              <img 
+                                src={message.file.url} 
+                                alt={message.file.name} 
+                                className="max-w-full max-h-60 rounded" 
+                              />
+                            ) : (
+                              <div className="flex items-center space-x-2 text-sm">
+                                <Paperclip size={16} />
+                                <a 
+                                  href={message.file.url} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="underline"
+                                >
+                                  {message.file.name}
+                                </a>
+                              </div>
+                            )}
                           </div>
                           <p className="text-xs mt-1 opacity-70">{message.file.name}</p>
                         </div>
@@ -279,6 +316,7 @@ const ChatPage = () => {
                   ref={fileInputRef}
                   onChange={handleFileChange}
                   className="hidden"
+                  accept="*/*" // Accept all file types
                 />
               </Button>
               

@@ -9,6 +9,12 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
+// Sample last messages for demo purposes - in a real app this would come from API/storage
+const lastMessages = {
+  "1": { content: "Привет", timestamp: new Date("2025-04-09T15:24:00") },
+  "2": { content: "Hey there!", timestamp: new Date("2025-04-09T15:24:00") }
+};
+
 const MessagesPage = () => {
   const { user, users, isAuthenticated } = useAuth();
   const navigate = useNavigate();
@@ -32,6 +38,18 @@ const MessagesPage = () => {
     
     setFilteredUsers(filtered);
   }, [users, user, searchQuery]);
+
+  // Helper function to get message preview
+  const getMessagePreview = (userId: string) => {
+    if (lastMessages[userId as keyof typeof lastMessages]) {
+      const message = lastMessages[userId as keyof typeof lastMessages];
+      const content = message.content;
+      
+      // Truncate message if too long
+      return content.length > 25 ? content.substring(0, 25) + "..." : content;
+    }
+    return language === "ru" ? "Нет сообщений" : "No messages";
+  };
 
   return (
     <div className="container mx-auto p-4 md:p-6 max-w-4xl">
@@ -74,36 +92,50 @@ const MessagesPage = () => {
             </div>
             
             <div className="space-y-2">
-              {filteredUsers.map((chatUser) => (
-                <button
-                  key={chatUser.id} 
-                  onClick={() => navigate(`/messages/${chatUser.id}`)}
-                  className="flex items-center gap-3 p-3 rounded-md hover:bg-accent w-full text-left"
-                >
-                  <Avatar>
-                    <AvatarImage src={chatUser.avatar} alt={chatUser.username} />
-                    <AvatarFallback>{chatUser.username[0].toUpperCase()}</AvatarFallback>
-                  </Avatar>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center justify-between">
-                      <p className="font-medium truncate">{chatUser.username}</p>
-                      <p className="text-xs text-muted-foreground whitespace-nowrap">9 Apr</p>
+              {filteredUsers.length > 0 ? (
+                filteredUsers.map((chatUser) => (
+                  <button
+                    key={chatUser.id} 
+                    onClick={() => navigate(`/messages/${chatUser.id}`)}
+                    className="flex items-center gap-3 p-3 rounded-md hover:bg-accent w-full text-left"
+                  >
+                    <Avatar>
+                      <AvatarImage src={chatUser.avatar} alt={chatUser.username} />
+                      <AvatarFallback>{chatUser.username[0].toUpperCase()}</AvatarFallback>
+                    </Avatar>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center justify-between">
+                        <p className="font-medium truncate">{chatUser.username}</p>
+                        <p className="text-xs text-muted-foreground whitespace-nowrap">9 Apr</p>
+                      </div>
+                      <p className="text-sm text-muted-foreground truncate">
+                        {getMessagePreview(chatUser.id)}
+                      </p>
                     </div>
-                    <p className="text-sm text-muted-foreground truncate">
-                      {chatUser.id === "1" ? "1.py" : t("language") === "ru" ? "Привет!" : "Hello!"}
-                    </p>
-                  </div>
-                </button>
-              ))}
+                  </button>
+                ))
+              ) : (
+                <div className="text-center py-4 text-muted-foreground">
+                  {language === "ru" ? "Пользователи не найдены" : "No users found"}
+                </div>
+              )}
             </div>
           </div>
           
-          {/* Empty state - desktop only, removed instructions text */}
+          {/* Empty state - desktop only */}
           <div className="hidden md:flex bg-card rounded-lg border shadow-sm p-6 items-center justify-center md:col-span-2">
             <div className="text-center">
               <div className="mx-auto h-20 w-20 bg-muted rounded-full flex items-center justify-center mb-4">
                 <MessageSquare className="h-12 w-12 text-muted-foreground" />
               </div>
+              <h2 className="text-xl font-medium mb-2">
+                {language === "ru" ? "Выберите чат" : "Select a chat"}
+              </h2>
+              <p className="text-muted-foreground">
+                {language === "ru" 
+                  ? "Выберите пользователя из списка слева, чтобы начать общение" 
+                  : "Select a user from the list on the left to start chatting"}
+              </p>
             </div>
           </div>
         </div>
