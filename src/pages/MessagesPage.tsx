@@ -9,46 +9,78 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Search, MessageSquare } from "lucide-react";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 
-// Sample last messages for demo purposes - in a real app this would come from API/storage
-const lastMessages = {
-  "1": { content: "Привет", timestamp: new Date("2025-04-09T15:24:00") },
-  "2": { content: "Hey there!", timestamp: new Date("2025-04-09T15:24:00") }
-};
-
 const MessagesPage = () => {
   const { user, users, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { t, language } = useTranslation();
   
   const [searchQuery, setSearchQuery] = useState("");
-  const [filteredUsers, setFilteredUsers] = useState(users.filter(u => u.id !== user?.id));
+  const [filteredUsers, setFilteredUsers] = useState<any[]>([]);
 
   useEffect(() => {
     // Filter out current user and apply search
-    const filtered = users.filter(u => {
-      if (u.id === user?.id) return false;
+    if (user) {
+      const filtered = users.filter(u => {
+        if (u.id === user?.id) return false;
+        
+        if (searchQuery.trim() === "") {
+          return true;
+        }
+        
+        const query = searchQuery.toLowerCase();
+        return u.username.toLowerCase().includes(query);
+      });
       
-      if (searchQuery.trim() === "") {
-        return true;
-      }
-      
-      const query = searchQuery.toLowerCase();
-      return u.username.toLowerCase().includes(query);
-    });
-    
-    setFilteredUsers(filtered);
+      setFilteredUsers(filtered);
+    }
   }, [users, user, searchQuery]);
 
   // Helper function to get message preview
   const getMessagePreview = (userId: string) => {
-    if (lastMessages[userId as keyof typeof lastMessages]) {
-      const message = lastMessages[userId as keyof typeof lastMessages];
-      const content = message.content;
+    if (user) {
+      const conversationKey = [user.id, userId].sort().join('-');
+      const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
       
-      // Truncate message if too long
-      return content.length > 25 ? content.substring(0, 25) + "..." : content;
+      if (savedMessages) {
+        try {
+          const parsedMessages = JSON.parse(savedMessages);
+          if (parsedMessages.length > 0) {
+            const lastMessage = parsedMessages[parsedMessages.length - 1];
+            const content = lastMessage.content || (lastMessage.file ? "🖼️" : "");
+            
+            // Truncate message if too long
+            return content.length > 25 ? content.substring(0, 25) + "..." : content;
+          }
+        } catch (error) {
+          console.error("Error parsing saved messages:", error);
+        }
+      }
     }
     return language === "ru" ? "Нет сообщений" : "No messages";
+  };
+
+  // Helper function to get the last message date
+  const getLastMessageDate = (userId: string) => {
+    if (user) {
+      const conversationKey = [user.id, userId].sort().join('-');
+      const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
+      
+      if (savedMessages) {
+        try {
+          const parsedMessages = JSON.parse(savedMessages);
+          if (parsedMessages.length > 0) {
+            const lastMessage = parsedMessages[parsedMessages.length - 1];
+            return new Date(lastMessage.timestamp).toLocaleDateString(undefined, { 
+              month: 'short', 
+              day: 'numeric' 
+            });
+          }
+        } catch (error) {
+          console.error("Error parsing saved messages:", error);
+        }
+      }
+    }
+    return "";
   };
 
   return (
@@ -106,7 +138,7 @@ const MessagesPage = () => {
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center justify-between">
                         <p className="font-medium truncate">{chatUser.username}</p>
-                        <p className="text-xs text-muted-foreground whitespace-nowrap">9 Apr</p>
+                        <p className="text-xs text-muted-foreground whitespace-nowrap">{getLastMessageDate(chatUser.id)}</p>
                       </div>
                       <p className="text-sm text-muted-foreground truncate">
                         {getMessagePreview(chatUser.id)}

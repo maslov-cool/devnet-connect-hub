@@ -7,13 +7,20 @@ import { useNotification } from "../hooks/useNotification";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowLeft, Send, Paperclip, Smile } from "lucide-react";
+import { ArrowLeft, Send, Paperclip, Smile, Download, FileText } from "lucide-react";
 import { toast } from "sonner";
 import EmojiPicker from "./EmojiPicker";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface Message {
   id: string;
   sender: string;
+  receiver: string;
   content: string;
   timestamp: Date;
   file?: {
@@ -21,10 +28,6 @@ interface Message {
     url: string;
     type?: string;
   };
-}
-
-interface MessagesByUser {
-  [userId: string]: Message[];
 }
 
 const ChatPage = () => {
@@ -36,70 +39,63 @@ const ChatPage = () => {
   
   const [chatUser, setChatUser] = useState<any>(null);
   const [messages, setMessages] = useState<Message[]>([]);
-  const [allMessages, setAllMessages] = useState<MessagesByUser>({});
   const [newMessage, setNewMessage] = useState("");
   const [file, setFile] = useState<File | null>(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [filePreviewOpen, setFilePreviewOpen] = useState(false);
+  const [previewFile, setPreviewFile] = useState<Message["file"] | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  const chatUserRef = useRef<string | undefined>("");
 
-  // Sample messages structure - stored by user ID
-  const demoMessages: MessagesByUser = {
-    "1": [
-      {
-        id: "1",
-        sender: "1",
-        content: "Привет",
-        timestamp: new Date("2025-04-09T15:24:00")
-      }
-    ],
-    "2": [
-      {
-        id: "1",
-        sender: "2",
-        content: "Hey there!",
-        timestamp: new Date("2025-04-09T15:24:00")
-      }
-    ]
-  };
-
+  // Initialize or get existing messages from local storage
   useEffect(() => {
     if (!isAuthenticated) {
       navigate("/login");
       return;
     }
 
-    // Initialize messages from demo data if none exist yet
-    if (Object.keys(allMessages).length === 0) {
-      setAllMessages(demoMessages);
-    }
-
-    // Save previous userId reference
-    const prevUserId = chatUserRef.current;
-    chatUserRef.current = userId;
-
-    // Update messages for the selected user
+    // Find the selected user
     const foundUser = users.find(u => u.id === userId);
     if (foundUser) {
       setChatUser(foundUser);
       
-      // Load messages for this specific user
-      if (allMessages[userId as string]) {
-        setMessages(allMessages[userId as string]);
-      } else {
-        setMessages([]);
+      // Clear current messages and load conversation for this specific user pair
+      if (user && userId) {
+        const conversationKey = [user.id, userId].sort().join('-');
+        const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
+        
+        if (savedMessages) {
+          try {
+            // Parse the saved messages and set them in state
+            const parsedMessages = JSON.parse(savedMessages);
+            setMessages(parsedMessages);
+          } catch (error) {
+            console.error("Error parsing saved messages:", error);
+            setMessages([]);
+          }
+        } else {
+          // No saved messages, start with empty conversation
+          setMessages([]);
+        }
       }
     } else {
       navigate("/messages");
     }
-  }, [userId, users, isAuthenticated, navigate, allMessages]);
+  }, [userId, users, isAuthenticated, navigate, user]);
 
   useEffect(() => {
     // Scroll to bottom when messages change
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
+
+  // Save messages to local storage when they change
+  useEffect(() => {
+    if (user && userId && messages.length > 0) {
+      const conversationKey = [user.id, userId].sort().join('-');
+      localStorage.setItem(`chat_${conversationKey}`, JSON.stringify(messages));
+    }
+  }, [messages, user, userId]);
 
   const handleSendMessage = () => {
     if ((!newMessage.trim() && !file) || !user || !userId) return;
@@ -107,6 +103,7 @@ const ChatPage = () => {
     const newMsg: Message = {
       id: Date.now().toString(),
       sender: user.id,
+      receiver: userId,
       content: newMessage,
       timestamp: new Date(),
     };
@@ -122,18 +119,19 @@ const ChatPage = () => {
           type: file.type
         };
         
-        // Update messages both in current view and in the global state
+        // Update messages
         const updatedMessages = [...messages, newMsg];
         setMessages(updatedMessages);
         
-        // Update in the global messages store
-        setAllMessages(prev => ({
-          ...prev,
-          [userId]: updatedMessages
-        }));
-        
         setNewMessage("");
         setFile(null);
+        
+        // Simulate notification for demo purposes
+        if (chatUser) {
+          setTimeout(() => {
+            newMessageNotification(user.username, t("sentFile"));
+          }, 1500);
+        }
       };
       reader.readAsDataURL(file);
     } else {
@@ -141,20 +139,14 @@ const ChatPage = () => {
       const updatedMessages = [...messages, newMsg];
       setMessages(updatedMessages);
       
-      // Update in the global messages store
-      setAllMessages(prev => ({
-        ...prev,
-        [userId]: updatedMessages
-      }));
-      
       setNewMessage("");
-    }
-    
-    // Simulate notification for demo purposes
-    if (chatUser) {
-      setTimeout(() => {
-        newMessageNotification(user.username, newMessage || "Отправил(а) файл");
-      }, 1500);
+      
+      // Simulate notification for demo purposes
+      if (chatUser) {
+        setTimeout(() => {
+          newMessageNotification(user.username, newMessage);
+        }, 1500);
+      }
     }
   };
 
@@ -169,7 +161,7 @@ const ChatPage = () => {
     const selectedFile = e.target.files?.[0];
     if (selectedFile) {
       setFile(selectedFile);
-      toast.info(t("language") === "ru" ? `Файл выбран: ${selectedFile.name}` : `File selected: ${selectedFile.name}`);
+      toast.info(`${t("fileSelected")}: ${selectedFile.name}`);
     }
   };
 
@@ -180,6 +172,34 @@ const ChatPage = () => {
   const addEmoji = (emoji: string) => {
     setNewMessage(prev => prev + emoji);
     setShowEmojiPicker(false);
+  };
+
+  const handleFilePreview = (file: Message["file"]) => {
+    setPreviewFile(file);
+    setFilePreviewOpen(true);
+  };
+
+  const handleFileDownload = (file: Message["file"]) => {
+    if (!file || !file.url) return;
+    
+    // Create a temporary link element
+    const link = document.createElement('a');
+    link.href = file.url;
+    link.download = file.name || 'download';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const getFileIcon = (fileType?: string) => {
+    if (!fileType) return <FileText size={16} />;
+    
+    if (fileType.startsWith('image/')) {
+      return null; // Images will be displayed directly
+    }
+    
+    // You can add more file type icons here as needed
+    return <FileText size={16} />;
   };
 
   if (!chatUser) return null;
@@ -205,12 +225,37 @@ const ChatPage = () => {
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center justify-between">
                     <p className="font-medium truncate">{chatUser.username}</p>
-                    <p className="text-xs text-muted-foreground whitespace-nowrap">9 Apr</p>
+                    {/* Show last message date if there's any message */}
+                    {user && (() => {
+                      const conversationKey = [user.id, chatUser.id].sort().join('-');
+                      const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
+                      if (savedMessages) {
+                        const parsedMessages = JSON.parse(savedMessages);
+                        if (parsedMessages.length > 0) {
+                          const lastMsg = parsedMessages[parsedMessages.length - 1];
+                          return (
+                            <p className="text-xs text-muted-foreground whitespace-nowrap">
+                              {new Date(lastMsg.timestamp).toLocaleDateString()}
+                            </p>
+                          );
+                        }
+                      }
+                      return null;
+                    })()}
                   </div>
                   <p className="text-sm text-muted-foreground truncate">
-                    {allMessages[chatUser.id]?.length > 0 
-                      ? (allMessages[chatUser.id][allMessages[chatUser.id].length - 1].content || "🖼️") 
-                      : ""}
+                    {user && (() => {
+                      const conversationKey = [user.id, chatUser.id].sort().join('-');
+                      const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
+                      if (savedMessages) {
+                        const parsedMessages = JSON.parse(savedMessages);
+                        if (parsedMessages.length > 0) {
+                          const lastMsg = parsedMessages[parsedMessages.length - 1];
+                          return lastMsg.content || (lastMsg.file ? "🖼️" : "");
+                        }
+                      }
+                      return "";
+                    })()}
                   </p>
                 </div>
               </Link>
@@ -261,24 +306,33 @@ const ChatPage = () => {
                       
                       {message.file && (
                         <div className="mt-2">
-                          <div className="bg-white bg-opacity-10 rounded p-2 flex items-center">
+                          <div 
+                            className="bg-white bg-opacity-10 rounded p-2 flex items-center"
+                            onClick={() => message.file && handleFilePreview(message.file)}
+                          >
                             {message.file.type?.startsWith('image/') ? (
                               <img 
                                 src={message.file.url} 
                                 alt={message.file.name} 
-                                className="max-w-full max-h-60 rounded" 
+                                className="max-w-full max-h-60 rounded cursor-pointer" 
                               />
                             ) : (
                               <div className="flex items-center space-x-2 text-sm">
-                                <Paperclip size={16} />
-                                <a 
-                                  href={message.file.url} 
-                                  target="_blank" 
-                                  rel="noopener noreferrer"
-                                  className="underline"
-                                >
+                                {getFileIcon(message.file.type)}
+                                <span className="cursor-pointer hover:underline">
                                   {message.file.name}
-                                </a>
+                                </span>
+                                <Button 
+                                  variant="ghost" 
+                                  size="icon" 
+                                  className="ml-2"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    message.file && handleFileDownload(message.file);
+                                  }}
+                                >
+                                  <Download size={14} />
+                                </Button>
                               </div>
                             )}
                           </div>
@@ -370,6 +424,38 @@ const ChatPage = () => {
           </div>
         </div>
       </div>
+      
+      {/* File preview dialog */}
+      <Dialog open={filePreviewOpen} onOpenChange={setFilePreviewOpen}>
+        <DialogContent className="max-w-3xl">
+          <DialogHeader>
+            <DialogTitle>{previewFile?.name || t("filePreview")}</DialogTitle>
+          </DialogHeader>
+          
+          <div className="flex flex-col items-center justify-center py-4">
+            {previewFile && previewFile.type?.startsWith('image/') ? (
+              <img 
+                src={previewFile.url} 
+                alt={previewFile.name} 
+                className="max-w-full max-h-[70vh]" 
+              />
+            ) : (
+              <div className="text-center">
+                <FileText size={64} className="mx-auto mb-4" />
+                <p>{previewFile?.name}</p>
+              </div>
+            )}
+            
+            <Button 
+              onClick={() => previewFile && handleFileDownload(previewFile)}
+              className="mt-4 bg-blue-900 hover:bg-blue-800"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              {t("language") === "ru" ? "Скачать файл" : "Download file"}
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };
