@@ -12,15 +12,17 @@ interface EmailData {
 export const useEmailService = () => {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [debug, setDebug] = useState<string | null>(null);
 
   const sendEmail = async (data: EmailData): Promise<boolean> => {
     setIsSending(true);
     setError(null);
+    setDebug(null);
     
     try {
-      console.log('Отправка письма через PHP:', data);
+      console.log('Sending email via PHP:', data);
       
-      // Реальный запрос к PHP-скрипту на сервере
+      // Send request to our PHP script
       const response = await fetch('/api/send-email.php', {
         method: 'POST',
         headers: {
@@ -34,31 +36,46 @@ export const useEmailService = () => {
         }),
       });
       
-      if (!response.ok) {
-        throw new Error(`Ошибка HTTP: ${response.status}`);
+      // Get response as text first to debug potential JSON parsing issues
+      const responseText = await response.text();
+      console.log('Raw PHP response:', responseText);
+      
+      let result;
+      try {
+        // Try to parse as JSON
+        result = JSON.parse(responseText);
+      } catch (e) {
+        console.error('Failed to parse JSON response:', e);
+        throw new Error(`Invalid JSON response from server: ${responseText.substring(0, 100)}`);
       }
       
-      const result = await response.json();
-      
       if (result.success) {
-        toast.success('Письмо успешно отправлено');
+        toast.success('Email sent successfully');
         return true;
       } else {
-        const errorMessage = result.error || 'Ошибка при отправке письма';
+        // Save error information
+        const errorMessage = result.error || 'Error sending email';
         setError(errorMessage);
-        toast.error(`Ошибка: ${errorMessage}`);
+        
+        // Save debug info if available
+        if (result.debug) {
+          setDebug(result.debug);
+          console.log('SMTP Debug:', result.debug);
+        }
+        
+        toast.error(`Error: ${errorMessage}`);
         return false;
       }
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка при отправке письма';
-      console.error('Ошибка при отправке письма:', errorMessage);
+      const errorMessage = err instanceof Error ? err.message : 'Error sending email';
+      console.error('Email sending error:', errorMessage);
       setError(errorMessage);
-      toast.error(`Ошибка отправки: ${errorMessage}`);
+      toast.error(`Sending error: ${errorMessage}`);
       return false;
     } finally {
       setIsSending(false);
     }
   };
 
-  return { sendEmail, isSending, error };
+  return { sendEmail, isSending, error, debug };
 };
