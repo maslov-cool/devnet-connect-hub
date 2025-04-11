@@ -7,11 +7,12 @@ import { useTranslation } from "../hooks/useTranslation";
 import { CheckCircle2, Bug, ChevronDown, ChevronUp } from "lucide-react";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { useEmailService } from "../hooks/useEmailService";
+import { Alert, AlertTitle, AlertDescription } from "@/components/ui/alert";
 
 const EmailVerificationPage = () => {
   const { t } = useTranslation();
   const [showDiagnostic, setShowDiagnostic] = useState(false);
-  const { sendEmail, isSending } = useEmailService();
+  const { sendEmail, isSending, error, debug, rawResponse } = useEmailService();
   
   // Function to send a test email
   const handleSendTestEmail = async () => {
@@ -88,6 +89,31 @@ const EmailVerificationPage = () => {
                       </>
                     )}
                   </Button>
+                  
+                  {error && (
+                    <Alert variant="destructive" className="mt-2">
+                      <AlertTitle>{t("language") === "ru" ? "Ошибка" : "Error"}</AlertTitle>
+                      <AlertDescription className="whitespace-pre-wrap">{error}</AlertDescription>
+                    </Alert>
+                  )}
+                  
+                  {debug && (
+                    <Alert className="mt-2">
+                      <AlertTitle>{t("language") === "ru" ? "Отладка SMTP" : "SMTP Debug"}</AlertTitle>
+                      <AlertDescription className="text-xs whitespace-pre-wrap overflow-auto max-h-40">
+                        {debug}
+                      </AlertDescription>
+                    </Alert>
+                  )}
+
+                  {rawResponse && (
+                    <Alert className="mt-2">
+                      <AlertTitle>{t("language") === "ru" ? "Ответ сервера" : "Server Response"}</AlertTitle>
+                      <AlertDescription className="text-xs whitespace-pre-wrap overflow-auto max-h-40">
+                        {rawResponse}
+                      </AlertDescription>
+                    </Alert>
+                  )}
                   
                   <div className="text-xs text-muted-foreground">
                     <p>

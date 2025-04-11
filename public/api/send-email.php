@@ -97,11 +97,17 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $data) {
         // Log successful email
         logDebug("Email successfully sent to: $email");
         
+        // Make sure to clear output buffer before sending JSON response
+        if (ob_get_length()) ob_clean();
+        
         echo json_encode(['success' => true, 'message' => 'Email sent successfully']);
     } catch (Exception $e) {
         // Log error details
         logDebug("Error: " . $mail->ErrorInfo);
         logDebug("Debug output: " . $debugOutput);
+        
+        // Make sure to clear output buffer before sending JSON response
+        if (ob_get_length()) ob_clean();
         
         echo json_encode([
             'success' => false, 
@@ -111,6 +117,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $data) {
     }
 } else {
     logDebug("Invalid request method or missing data");
+    
+    // Make sure to clear output buffer before sending JSON response
+    if (ob_get_length()) ob_clean();
+    
     echo json_encode(['success' => false, 'error' => 'Некорректный запрос']);
 }
 ?>

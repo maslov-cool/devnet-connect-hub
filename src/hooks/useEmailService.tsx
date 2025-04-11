@@ -13,11 +13,13 @@ export const useEmailService = () => {
   const [isSending, setIsSending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [debug, setDebug] = useState<string | null>(null);
+  const [rawResponse, setRawResponse] = useState<string | null>(null);
 
   const sendEmail = async (data: EmailData): Promise<boolean> => {
     setIsSending(true);
     setError(null);
     setDebug(null);
+    setRawResponse(null);
     
     try {
       console.log('Sending email via PHP:', data);
@@ -39,6 +41,13 @@ export const useEmailService = () => {
       // Get response as text first to debug potential JSON parsing issues
       const responseText = await response.text();
       console.log('Raw PHP response:', responseText);
+      setRawResponse(responseText);
+      
+      // Check if the response is empty
+      if (!responseText || responseText.trim() === '') {
+        console.error('Empty response from server');
+        throw new Error('Server returned an empty response');
+      }
       
       let result;
       try {
@@ -46,7 +55,9 @@ export const useEmailService = () => {
         result = JSON.parse(responseText);
       } catch (e) {
         console.error('Failed to parse JSON response:', e);
-        throw new Error(`Invalid JSON response from server: ${responseText.substring(0, 100)}`);
+        setError(`Invalid JSON response from server: ${responseText.substring(0, 100)}`);
+        toast.error(`JSON parsing error: ${e instanceof Error ? e.message : 'Unknown error'}`);
+        return false;
       }
       
       if (result.success) {
@@ -77,5 +88,5 @@ export const useEmailService = () => {
     }
   };
 
-  return { sendEmail, isSending, error, debug };
+  return { sendEmail, isSending, error, debug, rawResponse };
 };
