@@ -30,25 +30,24 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $data) {
         exit;
     }
     
-    // Подключаем автозагрузчик Composer (раскомментируйте в реальном приложении)
-    // require 'vendor/autoload.php';
+    // Подключаем автозагрузчик Composer
+    require 'vendor/autoload.php';
     
-    // В реальной среде используйте этот код вместо демо-логирования
     try {
         $mail = new PHPMailer(true);
         
-        // Настройки SMTP
+        // Настройки SMTP для Gmail
         $mail->isSMTP();
-        $mail->Host = 'smtp.gmail.com'; // Используем Gmail SMTP (замените на свой)
+        $mail->Host = 'smtp.gmail.com';
         $mail->SMTPAuth = true;
-        $mail->Username = 'your-gmail@gmail.com'; // Ваш Gmail
-        $mail->Password = 'your-app-password'; // Пароль приложения Gmail
+        $mail->Username = 'am1646789@gmail.com'; // Используем предоставленный email
+        $mail->Password = 'qasdfxbhejrbdhdi'; // Используем предоставленный пароль
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
         $mail->CharSet = 'UTF-8';
         
         // Получатель и отправитель
-        $mail->setFrom('no-reply@devnet.com', 'DevNet');
+        $mail->setFrom('am1646789@gmail.com', 'DevNet');
         $mail->addAddress($email, $name); // Отправляем на email пользователя
         
         // Содержимое письма

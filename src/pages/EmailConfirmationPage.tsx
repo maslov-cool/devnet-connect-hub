@@ -32,6 +32,12 @@ const EmailConfirmationPage = () => {
       try {
         const success = await verifyEmail(email, token);
         setIsSuccess(success);
+        
+        if (success) {
+          toast.success(t("language") === "ru" 
+            ? "Email успешно подтвержден! Теперь вы можете войти в систему." 
+            : "Email successfully verified! You can now log in.");
+        }
       } catch (error) {
         console.error(error);
         setIsSuccess(false);
@@ -41,7 +47,7 @@ const EmailConfirmationPage = () => {
     };
     
     verify();
-  }, [token, email, verifyEmail]);
+  }, [token, email, verifyEmail, t]);
   
   const handleConfirmClick = async () => {
     if (!token || !email) return;
@@ -53,8 +59,8 @@ const EmailConfirmationPage = () => {
       if (success) {
         setIsSuccess(true);
         toast.success(t("language") === "ru" 
-          ? "Email успешно подтвержден" 
-          : "Email successfully verified");
+          ? "Email успешно подтвержден! Теперь вы можете войти в систему." 
+          : "Email successfully verified! You can now log in.");
         setTimeout(() => {
           navigate("/login");
         }, 2000);
@@ -103,8 +109,8 @@ const EmailConfirmationPage = () => {
               ? t("language") === "ru" ? "Пожалуйста, подождите..." : "Please wait..."
               : isSuccess
               ? t("language") === "ru" 
-                ? "Ваш email был успешно подтвержден" 
-                : "Your email has been successfully verified"
+                ? "Ваш email был успешно подтвержден! Аккаунт активирован." 
+                : "Your email has been successfully verified! Account activated."
               : t("language") === "ru" 
                 ? "Возникла проблема при подтверждении вашего email" 
                 : "There was an issue verifying your email"

@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useEmailService } from "../hooks/useEmailService";
@@ -35,6 +36,7 @@ interface AuthContextType {
   forgotPassword: (email: string) => Promise<boolean>;
   resetPassword: (email: string, newPassword: string, token: string) => Promise<boolean>;
   verifyEmail: (email: string, token: string) => Promise<boolean>;
+  pendingUsers: User[];
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -49,6 +51,7 @@ export const AuthContext = createContext<AuthContextType>({
   forgotPassword: async () => false,
   resetPassword: async () => false,
   verifyEmail: async () => false,
+  pendingUsers: [],
 });
 
 interface AuthProviderProps {
@@ -58,47 +61,35 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
+  const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { sendEmail } = useEmailService();
 
   useEffect(() => {
-    // Загрузка пользователей из localStorage при инициализации
-    const storedUsers = localStorage.getItem("devnet_users");
-    if (storedUsers) {
-      try {
-        const parsedUsers = JSON.parse(storedUsers);
-        setUsers(parsedUsers);
-      } catch (error) {
-        console.error("Error parsing stored users:", error);
-        localStorage.setItem("devnet_users", JSON.stringify(sampleUsers));
-        setUsers(sampleUsers);
-      }
-    } else {
-      // Если нет сохраненных пользователей, инициализируем пустым массивом
-      localStorage.setItem("devnet_users", JSON.stringify(sampleUsers));
-      setUsers(sampleUsers);
-    }
-
-    // Проверка, авторизован ли пользователь из localStorage
-    const storedUser = localStorage.getItem("devnet_user");
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error("Error parsing stored user:", error);
-        localStorage.removeItem("devnet_user");
-      }
-    }
+    // Очищаем существующих пользователей при инициализации
+    localStorage.removeItem("devnet_users");
+    localStorage.removeItem("devnet_pending_users");
+    localStorage.removeItem("devnet_user");
+    
+    // Инициализируем пустыми массивами
+    setUsers([]);
+    setPendingUsers([]);
+    setUser(null);
+    setIsAuthenticated(false);
+    
+    localStorage.setItem("devnet_users", JSON.stringify([]));
+    localStorage.setItem("devnet_pending_users", JSON.stringify([]));
   }, []);
 
-  // Сохранение пользователей в localStorage при изменении массива пользователей
+  // Сохранение пользователей в localStorage при изменении
   useEffect(() => {
-    if (users.length > 0) {
-      localStorage.setItem("devnet_users", JSON.stringify(users));
-    }
+    localStorage.setItem("devnet_users", JSON.stringify(users));
   }, [users]);
+  
+  // Сохранение ожидающих подтверждения пользователей
+  useEffect(() => {
+    localStorage.setItem("devnet_pending_users", JSON.stringify(pendingUsers));
+  }, [pendingUsers]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -108,7 +99,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       );
 
       if (foundUser) {
-        // Проверяем, подтвержден ли email
+        // Проверяем, подтвержден ли email (на всякий случай, хотя это не должно быть нужно)
         if (foundUser.isEmailVerified === false) {
           toast.error("Пожалуйста, подтвердите ваш email перед входом");
           return false;
@@ -134,10 +125,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profileData: any
   ): Promise<boolean> => {
     try {
-      // Проверка, существует ли пользователь с таким email
+      // Проверка, существует ли пользователь с таким email среди подтвержденных
       const existingUser = users.find((u) => u.email === email);
       if (existingUser) {
         toast.error("Пользователь с таким email уже существует");
+        return false;
+      }
+      
+      // Проверка, есть ли уже ожидающий подтверждения пользователь с таким email
+      const pendingUser = pendingUsers.find((u) => u.email === email);
+      if (pendingUser) {
+        toast.error("Регистрация с этим email уже ожидает подтверждения");
         return false;
       }
 
@@ -147,9 +145,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatarUrl = profileData.generatedAvatarUrl;
       }
 
-      // Создание нового пользователя
+      // Создание нового пользователя (он будет в статусе pending)
       const newUser = {
-        id: (users.length + 1).toString(),
+        id: Date.now().toString(), // Уникальный ID на основе времени
         username,
         email,
         password,
@@ -164,18 +162,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatar: avatarUrl || "",
       };
 
-      // Добавление в список пользователей
-      const updatedUsers = [...users, newUser];
-      setUsers(updatedUsers);
+      // Добавление в список ожидающих подтверждения пользователей
+      const updatedPendingUsers = [...pendingUsers, newUser];
+      setPendingUsers(updatedPendingUsers);
       
       // Отправка письма для подтверждения
-      const verificationLink = `http://yoursite.com/email-confirm?email=${encodeURIComponent(email)}&token=verify123`;
+      const token = `verify-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const verificationLink = `${window.location.origin}/email-confirm?email=${encodeURIComponent(email)}&token=${token}`;
       const emailContent = `
         <h2>Подтверждение регистрации в DevNet</h2>
         <p>Здравствуйте, ${username}!</p>
         <p>Для подтверждения вашего аккаунта, пожалуйста, перейдите по следующей ссылке:</p>
         <p><a href="${verificationLink}" style="padding: 10px 20px; background-color: #0f4c81; color: white; text-decoration: none; border-radius: 5px;">Подтвердить email</a></p>
-        <p>Если вы не регистрировались в DevNet, просто проигнорируй��е это письмо.</p>
+        <p>Если вы не регистрировались в DevNet, просто проигнорируйте это письмо.</p>
         <p>С уважением, Команда DevNet</p>
       `;
       
@@ -183,11 +182,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await sendEmail({
           name: username,
           email: email,
-          message: emailContent
+          message: emailContent,
+          subject: "DevNet: Подтверждение регистрации"
         });
       } catch (error) {
         console.error("Error sending verification email:", error);
-        // Продолжаем процесс регистрации даже если отправка письма не удалась
+        toast.error("Ошибка при отправке письма для подтверждения");
+        return false;
       }
       
       return true;
@@ -199,23 +200,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const verifyEmail = async (email: string, token: string): Promise<boolean> => {
     try {
-      // В реальном приложении здесь была бы проверка токена
-      // Для демонстрации просто обновляем статус верификации пользователя
+      // Находим пользователя в списке ожидающих подтверждения
+      const pendingUser = pendingUsers.find((u) => u.email === email);
       
-      const updatedUsers = users.map(user => {
-        if (user.email === email) {
-          return { ...user, isEmailVerified: true };
-        }
-        return user;
-      });
+      if (!pendingUser) {
+        toast.error("Пользователь не найден или уже подтвержден");
+        return false;
+      }
       
+      // Добавляем пользователя в список подтвержденных
+      const verifiedUser = { ...pendingUser, isEmailVerified: true };
+      const updatedUsers = [...users, verifiedUser];
       setUsers(updatedUsers);
       
-      // Если текущий пользователь - это тот, чей email подтверждается
-      if (user && user.email === email) {
-        const updatedUser = { ...user, isEmailVerified: true };
-        setUser(updatedUser);
-        localStorage.setItem("devnet_user", JSON.stringify(updatedUser));
+      // Удаляем пользователя из списка ожидающих
+      const updatedPendingUsers = pendingUsers.filter(u => u.email !== email);
+      setPendingUsers(updatedPendingUsers);
+      
+      // Отправляем уведомление об успешной регистрации
+      const welcomeEmailContent = `
+        <h2>Добро пожаловать в DevNet!</h2>
+        <p>Здравствуйте, ${verifiedUser.username}!</p>
+        <p>Ваша регистрация успешно завершена. Теперь вы можете войти в систему, используя ваш email и пароль.</p>
+        <p>С уважением, Команда DevNet</p>
+      `;
+      
+      try {
+        await sendEmail({
+          name: verifiedUser.username,
+          email: verifiedUser.email,
+          message: welcomeEmailContent,
+          subject: "DevNet: Успешная регистрация!"
+        });
+      } catch (error) {
+        console.error("Error sending welcome email:", error);
+        // Продолжаем процесс верификации, даже если отправка письма не удалась
       }
       
       return true;
@@ -274,7 +293,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       }
       
       // Создание ссылки для сброса пароля
-      const resetLink = `http://yoursite.com/reset-password?email=${encodeURIComponent(email)}&token=reset123`;
+      const resetToken = `reset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+      const resetLink = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}&token=${resetToken}`;
       const emailContent = `
         <h2>Сброс пароля в DevNet</h2>
         <p>Здравствуйте, ${foundUser.username}!</p>
@@ -288,7 +308,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         await sendEmail({
           name: foundUser.username,
           email: email,
-          message: emailContent
+          message: emailContent,
+          subject: "DevNet: Сброс пароля"
         });
       } catch (error) {
         console.error("Error sending password reset email:", error);
@@ -344,6 +365,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         forgotPassword,
         resetPassword,
         verifyEmail,
+        pendingUsers,
       }}
     >
       {children}
