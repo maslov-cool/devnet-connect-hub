@@ -1,10 +1,12 @@
 
 import { useState } from 'react';
+import { toast } from 'sonner';
 
 interface EmailData {
   name?: string;
   email: string;
   message: string;
+  subject?: string;
 }
 
 export const useEmailService = () => {
@@ -16,31 +18,42 @@ export const useEmailService = () => {
     setError(null);
     
     try {
-      // В реальном приложении здесь был бы запрос к PHP-скрипту
       console.log('Отправка письма через PHP:', data);
       
-      // Эмуляция запроса к PHP API
-      // В реальном приложении здесь должен быть реальный HTTP запрос
+      // Реальный запрос к PHP-скрипту на сервере
       const response = await fetch('/api/send-email.php', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify(data),
+        body: JSON.stringify({
+          name: data.name || 'DevNet User',
+          email: data.email,
+          message: data.message,
+          subject: data.subject || `DevNet: ${data.name ? "Сообщение для " + data.name : "Важное уведомление"}`,
+        }),
       });
       
-      // Эмуляция ответа от PHP-скрипта
-      const result = { success: true };
+      if (!response.ok) {
+        throw new Error(`Ошибка HTTP: ${response.status}`);
+      }
+      
+      const result = await response.json();
       
       if (result.success) {
+        toast.success('Письмо успешно отправлено');
         return true;
       } else {
-        setError('Ошибка при отправке письма');
+        const errorMessage = result.error || 'Ошибка при отправке письма';
+        setError(errorMessage);
+        toast.error(`Ошибка: ${errorMessage}`);
         return false;
       }
     } catch (err) {
-      console.error('Ошибка при отправке письма:', err);
-      setError('Произошла ошибка при отправке письма');
+      const errorMessage = err instanceof Error ? err.message : 'Произошла ошибка при отправке письма';
+      console.error('Ошибка при отправке письма:', errorMessage);
+      setError(errorMessage);
+      toast.error(`Ошибка отправки: ${errorMessage}`);
       return false;
     } finally {
       setIsSending(false);

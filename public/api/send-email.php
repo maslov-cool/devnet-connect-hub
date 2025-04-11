@@ -22,6 +22,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $data) {
     $name = isset($data['name']) ? htmlspecialchars($data['name']) : '';
     $email = isset($data['email']) ? htmlspecialchars($data['email']) : '';
     $message = isset($data['message']) ? htmlspecialchars($data['message']) : '';
+    $subject = isset($data['subject']) ? htmlspecialchars($data['subject']) : 'DevNet: Важное уведомление';
     
     // Проверка обязательных полей
     if (empty($email) || empty($message)) {
@@ -29,48 +30,49 @@ if ($_SERVER["REQUEST_METHOD"] == "POST" && $data) {
         exit;
     }
     
-    // Здесь должен быть подключен автозагрузчик Composer
+    // Подключаем автозагрузчик Composer (раскомментируйте в реальном приложении)
     // require 'vendor/autoload.php';
     
-    // Поскольку мы в демонстрационном режиме, просто имитируем отправку
-    // и возвращаем успешный результат
-    
-    /*
-    // Реальный код отправки письма
+    // В реальной среде используйте этот код вместо демо-логирования
     try {
         $mail = new PHPMailer(true);
         
         // Настройки SMTP
         $mail->isSMTP();
-        $mail->Host = 'smtp.example.com'; // Адрес SMTP-сервера
+        $mail->Host = 'smtp.gmail.com'; // Используем Gmail SMTP (замените на свой)
         $mail->SMTPAuth = true;
-        $mail->Username = 'your-email@example.com'; // Email отправителя
-        $mail->Password = 'your-email-password'; // Пароль почты отправителя
+        $mail->Username = 'your-gmail@gmail.com'; // Ваш Gmail
+        $mail->Password = 'your-app-password'; // Пароль приложения Gmail
         $mail->SMTPSecure = 'tls';
         $mail->Port = 587;
+        $mail->CharSet = 'UTF-8';
         
-        // Отправитель и получатель
+        // Получатель и отправитель
         $mail->setFrom('no-reply@devnet.com', 'DevNet');
-        $mail->addAddress($email, $name);
+        $mail->addAddress($email, $name); // Отправляем на email пользователя
         
         // Содержимое письма
         $mail->isHTML(true);
-        $mail->Subject = "DevNet: " . ($name ? "Сообщение для " . $name : "Важное уведомление");
-        $mail->Body = nl2br($message);
+        $mail->Subject = $subject;
+        $mail->Body = $message;
         
         $mail->send();
         echo json_encode(['success' => true]);
     } catch (Exception $e) {
+        // Записываем ошибку в лог для отладки
+        $logFile = __DIR__ . '/email_error_log.txt';
+        $logMessage = date('Y-m-d H:i:s') . " - Ошибка отправки письма на $email: " . $mail->ErrorInfo . "\n";
+        file_put_contents($logFile, $logMessage, FILE_APPEND);
+        
         echo json_encode(['success' => false, 'error' => $mail->ErrorInfo]);
+        exit;
     }
-    */
     
-    // Для демонстрации просто выводим данные
+    // Для отладки и демонстрации записываем в лог
     $logFile = __DIR__ . '/email_log.txt';
     $logMessage = date('Y-m-d H:i:s') . " - Отправка письма на $email: $message\n";
     file_put_contents($logFile, $logMessage, FILE_APPEND);
     
-    echo json_encode(['success' => true]);
 } else {
     echo json_encode(['success' => false, 'error' => 'Некорректный запрос']);
 }
