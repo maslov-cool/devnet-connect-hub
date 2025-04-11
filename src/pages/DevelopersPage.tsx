@@ -21,7 +21,7 @@ const DevelopersPage = () => {
       const query = searchQuery.toLowerCase();
       const filtered = users.filter(user => 
         user.username.toLowerCase().includes(query) ||
-        (user.skills && user.skills.some(skill => 
+        (user.skills && Array.isArray(user.skills) && user.skills.some(skill => 
           skill.toLowerCase().includes(query)
         ))
       );

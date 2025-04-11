@@ -11,6 +11,7 @@ export interface User {
   email: string;
   password: string;
   avatar?: string;
+  skills?: string[];
   languages?: string[];
   currentlyStudying?: string[];
   experience?: string;

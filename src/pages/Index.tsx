@@ -24,7 +24,7 @@ const Index = () => {
         (u) =>
           (user ? u.id !== user.id : true) &&
           (u.username.toLowerCase().includes(query) ||
-            (u.skills && u.skills.some((skill) => skill.toLowerCase().includes(query))))
+            (u.skills && Array.isArray(u.skills) && u.skills.some(skill => skill.toLowerCase().includes(query))))
       );
       setFilteredUsers(filtered);
     }
