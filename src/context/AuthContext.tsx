@@ -1,6 +1,6 @@
-
 import React, { createContext, useState, useEffect } from "react";
 import { toast } from "sonner";
+import { useEmailService } from "../hooks/useEmailService";
 
 // Пустой массив пользователей для инициализации
 const sampleUsers: any[] = [];
@@ -59,6 +59,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const { sendEmail } = useEmailService();
 
   useEffect(() => {
     // Загрузка пользователей из localStorage при инициализации
@@ -140,6 +141,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
 
+      // Определение аватара
+      let avatarUrl = "";
+      if (profileData.generatedAvatarUrl) {
+        avatarUrl = profileData.generatedAvatarUrl;
+      }
+
       // Создание нового пользователя
       const newUser = {
         id: (users.length + 1).toString(),
@@ -154,14 +161,34 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         experience: profileData.experience || "0-1",
         itPosition: profileData.itPosition || "",
         projects: profileData.projects || "",
+        avatar: avatarUrl || "",
       };
 
       // Добавление в список пользователей
       const updatedUsers = [...users, newUser];
       setUsers(updatedUsers);
       
-      // Здесь в реальном приложении был бы код отправки email
-      console.log(`Отправка письма для подтверждения на: ${email}`);
+      // Отправка письма для подтверждения
+      const verificationLink = `http://yoursite.com/email-confirm?email=${encodeURIComponent(email)}&token=verify123`;
+      const emailContent = `
+        <h2>Подтверждение регистрации в DevNet</h2>
+        <p>Здравствуйте, ${username}!</p>
+        <p>Для подтверждения вашего аккаунта, пожалуйста, перейдите по следующей ссылке:</p>
+        <p><a href="${verificationLink}" style="padding: 10px 20px; background-color: #0f4c81; color: white; text-decoration: none; border-radius: 5px;">Подтвердить email</a></p>
+        <p>Если вы не регистрировались в DevNet, просто проигнорируй��е это письмо.</p>
+        <p>С уважением, Команда DevNet</p>
+      `;
+      
+      try {
+        await sendEmail({
+          name: username,
+          email: email,
+          message: emailContent
+        });
+      } catch (error) {
+        console.error("Error sending verification email:", error);
+        // Продолжаем процесс регистрации даже если отправка письма не удалась
+      }
       
       return true;
     } catch (error) {
@@ -246,8 +273,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
       
-      // В реальном приложении здесь был бы код отправки email со ссылкой для сброса пароля
-      console.log(`Отправка письма для сброса пароля на: ${email}`);
+      // Создание ссылки для сброса пароля
+      const resetLink = `http://yoursite.com/reset-password?email=${encodeURIComponent(email)}&token=reset123`;
+      const emailContent = `
+        <h2>Сброс пароля в DevNet</h2>
+        <p>Здравствуйте, ${foundUser.username}!</p>
+        <p>Для сброса пароля, пожалуйста, перейдите по следующей ссылке:</p>
+        <p><a href="${resetLink}" style="padding: 10px 20px; background-color: #0f4c81; color: white; text-decoration: none; border-radius: 5px;">Сбросить пароль</a></p>
+        <p>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>
+        <p>С уважением, Команда DevNet</p>
+      `;
+      
+      try {
+        await sendEmail({
+          name: foundUser.username,
+          email: email,
+          message: emailContent
+        });
+      } catch (error) {
+        console.error("Error sending password reset email:", error);
+        return false;
+      }
       
       return true;
     } catch (error) {

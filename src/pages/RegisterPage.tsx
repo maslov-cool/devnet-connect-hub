@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { toast } from "sonner";
-import { ArrowLeft, RefreshCw } from "lucide-react";
+import { ArrowLeft, RefreshCw, CheckCircle } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Select, 
@@ -17,6 +17,7 @@ import {
   SelectValue 
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 
 const programmingLanguages = [
   "JavaScript", "TypeScript", "Python", "Java", "C#", "C++", "PHP", "Ruby", "Swift", 
@@ -39,10 +40,45 @@ const RegisterPage = () => {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [useRandomAvatar, setUseRandomAvatar] = useState(false);
   const [skipAvatar, setSkipAvatar] = useState(false);
+  const [generatingAvatar, setGeneratingAvatar] = useState(false);
+  const [generationProgress, setGenerationProgress] = useState(0);
+  const [generatedAvatarUrl, setGeneratedAvatarUrl] = useState<string | null>(null);
   
   const { register } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
+
+  // Эффект для симуляции генерации аватара
+  useEffect(() => {
+    let interval: number | undefined;
+    
+    if (generatingAvatar) {
+      setGenerationProgress(0);
+      setGeneratedAvatarUrl(null);
+      
+      interval = window.setInterval(() => {
+        setGenerationProgress((prevProgress) => {
+          if (prevProgress >= 100) {
+            setGeneratingAvatar(false);
+            clearInterval(interval);
+            
+            // После окончания генерации создаем случайный аватар
+            // В реальном приложении здесь был бы запрос к API для создания аватара
+            const randomColor = Math.floor(Math.random() * 16777215).toString(16);
+            const randomAvatar = `https://api.dicebear.com/6.x/bottts/svg?seed=${Date.now()}&backgroundColor=${randomColor}`;
+            setGeneratedAvatarUrl(randomAvatar);
+            
+            return 100;
+          }
+          return prevProgress + 10; // увеличиваем на 10% каждую секунду (10 секунд всего)
+        });
+      }, 1000); // обновляем каждую секунду
+    }
+    
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [generatingAvatar]);
   
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -68,8 +104,9 @@ const RegisterPage = () => {
         experience,
         itPosition,
         projects,
-        useRandomAvatar,
-        skipAvatar
+        useRandomAvatar: useRandomAvatar || !!generatedAvatarUrl,
+        skipAvatar,
+        generatedAvatarUrl
       };
       
       const success = await register(username, email, password, profileData);
@@ -93,6 +130,7 @@ const RegisterPage = () => {
       setSelectedFile(e.target.files[0]);
       setUseRandomAvatar(false);
       setSkipAvatar(false);
+      setGeneratedAvatarUrl(null);
     }
   };
   
@@ -100,7 +138,7 @@ const RegisterPage = () => {
     setUseRandomAvatar(true);
     setSelectedFile(null);
     setSkipAvatar(false);
-    toast.success(t("language") === "ru" ? "Аватар будет сгенерирован автоматически" : "Avatar will be generated automatically");
+    setGeneratingAvatar(true);
   };
 
   const handleLanguageToggle = (language: string) => {
@@ -142,6 +180,16 @@ const RegisterPage = () => {
                       alt="Profile" 
                       className="w-full h-full object-cover"
                     />
+                  ) : generatingAvatar ? (
+                    <div className="flex items-center justify-center flex-col w-full h-full">
+                      <RefreshCw className="w-8 h-8 text-blue-500 dark:text-blue-200 animate-spin" />
+                    </div>
+                  ) : generatedAvatarUrl ? (
+                    <img 
+                      src={generatedAvatarUrl} 
+                      alt="Generated Avatar" 
+                      className="w-full h-full object-cover"
+                    />
                   ) : useRandomAvatar ? (
                     <div className="flex items-center justify-center w-full h-full bg-blue-100 dark:bg-blue-900">
                       <RefreshCw className="w-8 h-8 text-blue-500 dark:text-blue-200" />
@@ -156,45 +204,63 @@ const RegisterPage = () => {
                     accept="image/*"
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
                     onChange={handleFileChange}
+                    disabled={generatingAvatar}
                   />
                 </div>
               </div>
-              <div className="flex justify-center space-x-4 mt-2">
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="generate-avatar"
-                    checked={useRandomAvatar}
-                    onCheckedChange={() => generateRandomAvatar()}
-                  />
-                  <label 
-                    htmlFor="generate-avatar" 
-                    className="text-sm cursor-pointer"
-                  >
-                    {t("language") === "ru" ? "Сгенерировать" : "Generate"}
-                  </label>
+              
+              {generatingAvatar && (
+                <div className="mt-2 w-full px-12">
+                  <Progress value={generationProgress} className="h-2" />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    {t("language") === "ru" 
+                      ? `Генерация аватара: ${Math.round(generationProgress)}%` 
+                      : `Generating avatar: ${Math.round(generationProgress)}%`}
+                  </p>
                 </div>
-                <div className="flex items-center space-x-2">
-                  <Checkbox 
-                    id="skip-avatar"
-                    checked={skipAvatar}
-                    onCheckedChange={(checked) => {
-                      if (checked) {
-                        setSkipAvatar(true);
-                        setUseRandomAvatar(false);
-                        setSelectedFile(null);
-                      } else {
-                        setSkipAvatar(false);
-                      }
-                    }}
-                  />
-                  <label 
-                    htmlFor="skip-avatar" 
-                    className="text-sm cursor-pointer"
-                  >
-                    {t("language") === "ru" ? "Без аватара" : "Skip avatar"}
-                  </label>
+              )}
+              
+              {!generatingAvatar && (
+                <div className="flex justify-center space-x-4 mt-2">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="generate-avatar"
+                      checked={useRandomAvatar || !!generatedAvatarUrl}
+                      onCheckedChange={() => !generatingAvatar && generateRandomAvatar()}
+                      disabled={generatingAvatar}
+                    />
+                    <label 
+                      htmlFor="generate-avatar" 
+                      className="text-sm cursor-pointer"
+                    >
+                      {t("language") === "ru" ? "Сгенерировать" : "Generate"}
+                    </label>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <Checkbox 
+                      id="skip-avatar"
+                      checked={skipAvatar}
+                      onCheckedChange={(checked) => {
+                        if (checked && !generatingAvatar) {
+                          setSkipAvatar(true);
+                          setUseRandomAvatar(false);
+                          setSelectedFile(null);
+                          setGeneratedAvatarUrl(null);
+                        } else {
+                          setSkipAvatar(false);
+                        }
+                      }}
+                      disabled={generatingAvatar}
+                    />
+                    <label 
+                      htmlFor="skip-avatar" 
+                      className="text-sm cursor-pointer"
+                    >
+                      {t("language") === "ru" ? "Без аватара" : "Skip avatar"}
+                    </label>
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             
             <div>
@@ -358,7 +424,7 @@ const RegisterPage = () => {
               />
             </div>
             
-            <Button type="submit" className="w-full bg-blue-900 hover:bg-blue-800" disabled={isLoading}>
+            <Button type="submit" className="w-full bg-blue-900 hover:bg-blue-800" disabled={isLoading || generatingAvatar}>
               {isLoading ? (
                 <span className="flex items-center gap-2">
                   <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
