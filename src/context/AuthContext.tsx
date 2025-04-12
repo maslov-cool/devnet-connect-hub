@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useEmailService } from "../hooks/useEmailService";
@@ -99,12 +98,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       );
 
       if (foundUser) {
-        // Проверяем, подтвержден ли email (на всякий случай, хотя это не должно быть нужно)
-        if (foundUser.isEmailVerified === false) {
-          toast.error("Пожалуйста, подтвердите ваш email перед входом");
-          return false;
-        }
-
+        // Больше не проверяем верификацию email
         setUser(foundUser);
         setIsAuthenticated(true);
         localStorage.setItem("devnet_user", JSON.stringify(foundUser));
@@ -125,17 +119,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profileData: any
   ): Promise<boolean> => {
     try {
-      // Проверка, существует ли пользователь с таким email среди подтвержденных
+      // Проверка, существует ли пользователь с таким email
       const existingUser = users.find((u) => u.email === email);
       if (existingUser) {
         toast.error("Пользователь с таким email уже существует");
-        return false;
-      }
-      
-      // Проверка, есть ли уже ожидающий подтверждения пользователь с таким email
-      const pendingUser = pendingUsers.find((u) => u.email === email);
-      if (pendingUser) {
-        toast.error("Регистрация с этим email уже ожидает подтверждения");
         return false;
       }
 
@@ -145,14 +132,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatarUrl = profileData.generatedAvatarUrl;
       }
 
-      // Создание нового пользователя (он будет в статусе pending)
+      // Создание нового пользователя - сразу добавляем в основной список
       const newUser = {
-        id: Date.now().toString(), // Уникальный ID на основе времени
+        id: Date.now().toString(),
         username,
         email,
         password,
         registrationDate: new Date().toISOString().split("T")[0],
-        isEmailVerified: false, // По умолчанию email не подтвержден
+        isEmailVerified: true, // Сразу помечае�� пользователя как верифицированного
         telegramLink: profileData.telegramLink || "",
         githubLink: profileData.githubLink || "",
         languages: profileData.languages || [],
@@ -162,34 +149,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatar: avatarUrl || "",
       };
 
-      // Добавление в список ожидающих подтверждения пользователей
-      const updatedPendingUsers = [...pendingUsers, newUser];
-      setPendingUsers(updatedPendingUsers);
-      
-      // Отправка письма для подтверждения
-      const token = `verify-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const verificationLink = `${window.location.origin}/email-confirm?email=${encodeURIComponent(email)}&token=${token}`;
-      const emailContent = `
-        <h2>Подтверждение регистрации в DevNet</h2>
-        <p>Здравствуйте, ${username}!</p>
-        <p>Для подтверждения вашего аккаунта, пожалуйста, перейдите по следующей ссылке:</p>
-        <p><a href="${verificationLink}" style="padding: 10px 20px; background-color: #0f4c81; color: white; text-decoration: none; border-radius: 5px;">Подтвердить email</a></p>
-        <p>Если вы не регистрировались в DevNet, просто проигнорируйте это письмо.</p>
-        <p>С уважением, Команда DevNet</p>
-      `;
-      
-      try {
-        await sendEmail({
-          name: username,
-          email: email,
-          message: emailContent,
-          subject: "DevNet: Подтверждение регистрации"
-        });
-      } catch (error) {
-        console.error("Error sending verification email:", error);
-        toast.error("Ошибка при отправке письма для подтверждения");
-        return false;
-      }
+      // Добавляем пользователя в основной список
+      const updatedUsers = [...users, newUser];
+      setUsers(updatedUsers);
       
       return true;
     } catch (error) {
@@ -200,7 +162,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
 
   const verifyEmail = async (email: string, token: string): Promise<boolean> => {
     try {
-      // Находим пользователя в списке ожидающих подтверждения
       const pendingUser = pendingUsers.find((u) => u.email === email);
       
       if (!pendingUser) {
@@ -208,34 +169,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         return false;
       }
       
-      // Добавляем пользователя в список подтвержденных
       const verifiedUser = { ...pendingUser, isEmailVerified: true };
       const updatedUsers = [...users, verifiedUser];
       setUsers(updatedUsers);
       
-      // Удаляем пользователя из списка ожидающих
       const updatedPendingUsers = pendingUsers.filter(u => u.email !== email);
       setPendingUsers(updatedPendingUsers);
-      
-      // Отправляем уведомление об успешной регистрации
-      const welcomeEmailContent = `
-        <h2>Добро пожаловать в DevNet!</h2>
-        <p>Здравствуйте, ${verifiedUser.username}!</p>
-        <p>Ваша регистрация успешно завершена. Теперь вы можете войти в систему, используя ваш email и пароль.</p>
-        <p>С уважением, Команда DevNet</p>
-      `;
-      
-      try {
-        await sendEmail({
-          name: verifiedUser.username,
-          email: verifiedUser.email,
-          message: welcomeEmailContent,
-          subject: "DevNet: Успешная регистрация!"
-        });
-      } catch (error) {
-        console.error("Error sending welcome email:", error);
-        // Продолжаем процесс верификации, даже если отправка письма не удалась
-      }
       
       return true;
     } catch (error) {

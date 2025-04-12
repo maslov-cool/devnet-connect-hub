@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -14,7 +13,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   
-  const { login } = useAuth();
+  const { login, users } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
   
@@ -29,6 +28,9 @@ const LoginPage = () => {
     setIsLoading(true);
     
     try {
+      console.log("Trying to login with:", email);
+      console.log("Available users:", users.map(u => ({ email: u.email, password: u.password })));
+      
       const success = await login(email, password);
       
       if (success) {
