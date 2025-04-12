@@ -32,6 +32,28 @@ interface Message {
   };
 }
 
+// Function to get chat messages from localStorage
+const getMessagesFromStorage = (conversationKey: string): Message[] => {
+  try {
+    const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
+    if (savedMessages) {
+      return JSON.parse(savedMessages);
+    }
+  } catch (error) {
+    console.error("Error retrieving messages from localStorage:", error);
+  }
+  return [];
+};
+
+// Function to save chat messages to localStorage
+const saveMessagesToStorage = (conversationKey: string, messages: Message[]): void => {
+  try {
+    localStorage.setItem(`chat_${conversationKey}`, JSON.stringify(messages));
+  } catch (error) {
+    console.error("Error saving messages to localStorage:", error);
+  }
+};
+
 const ChatPage = () => {
   const { userId } = useParams<{ userId: string }>();
   const { user, users, isAuthenticated } = useAuth();
@@ -50,6 +72,7 @@ const ChatPage = () => {
   
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const [conversationKey, setConversationKey] = useState<string>("");
 
   // Initialize or get existing messages from local storage
   useEffect(() => {
@@ -60,31 +83,16 @@ const ChatPage = () => {
 
     // Find the selected user
     const foundUser = users.find(u => u.id === userId);
-    if (foundUser) {
+    if (foundUser && user) {
       setChatUser(foundUser);
       
-      // Clear current messages and load conversation for this specific user pair
-      if (user && userId) {
-        // Clear messages before loading
-        setMessages([]);
-        
-        const conversationKey = [user.id, userId].sort().join('-');
-        const savedMessages = localStorage.getItem(`chat_${conversationKey}`);
-        
-        if (savedMessages) {
-          try {
-            // Parse the saved messages and set them in state
-            const parsedMessages = JSON.parse(savedMessages);
-            setMessages(parsedMessages);
-          } catch (error) {
-            console.error("Error parsing saved messages:", error);
-            setMessages([]);
-          }
-        } else {
-          // No saved messages, start with empty conversation
-          setMessages([]);
-        }
-      }
+      // Create a consistent conversation key that works regardless of who initiated the conversation
+      const newConversationKey = [user.id, foundUser.id].sort().join('-');
+      setConversationKey(newConversationKey);
+      
+      // Load messages from localStorage
+      const loadedMessages = getMessagesFromStorage(newConversationKey);
+      setMessages(loadedMessages);
     } else {
       navigate("/messages");
     }
@@ -95,13 +103,12 @@ const ChatPage = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // Save messages to local storage when they change
+  // Save messages to localStorage when they change
   useEffect(() => {
-    if (user && userId && messages.length > 0) {
-      const conversationKey = [user.id, userId].sort().join('-');
-      localStorage.setItem(`chat_${conversationKey}`, JSON.stringify(messages));
+    if (conversationKey && messages.length > 0) {
+      saveMessagesToStorage(conversationKey, messages);
     }
-  }, [messages, user, userId]);
+  }, [messages, conversationKey]);
 
   const handleSendMessage = () => {
     if ((!newMessage.trim() && !file) || !user || !userId) return;
@@ -130,6 +137,11 @@ const ChatPage = () => {
         const updatedMessages = [...messages, newMsg];
         setMessages(updatedMessages);
         
+        // Save to localStorage
+        if (conversationKey) {
+          saveMessagesToStorage(conversationKey, updatedMessages);
+        }
+        
         // Clear form
         setNewMessage("");
         setFile(null);
@@ -147,6 +159,11 @@ const ChatPage = () => {
       // Text-only message
       const updatedMessages = [...messages, newMsg];
       setMessages(updatedMessages);
+      
+      // Save to localStorage
+      if (conversationKey) {
+        saveMessagesToStorage(conversationKey, updatedMessages);
+      }
       
       setNewMessage("");
       
@@ -489,4 +506,3 @@ const ChatPage = () => {
 };
 
 export default ChatPage;
-

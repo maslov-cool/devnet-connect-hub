@@ -6,8 +6,6 @@ import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import DeveloperCard from "../components/DeveloperCard";
 import { Navigate, useNavigate } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
 
 const Index = () => {
   const { t } = useTranslation();

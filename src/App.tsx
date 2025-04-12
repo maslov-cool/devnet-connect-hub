@@ -55,7 +55,9 @@ const App = () => (
                   <Route path="/" element={<Layout />}>
                     {/* Home page shows all developers */}
                     <Route path="home" element={
-                      <Index />
+                      <ProtectedRoute>
+                        <Index />
+                      </ProtectedRoute>
                     } />
                     <Route path="messages" element={
                       <ProtectedRoute>
