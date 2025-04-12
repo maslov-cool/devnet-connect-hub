@@ -1,5 +1,4 @@
-
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -48,7 +47,6 @@ const RegisterPage = () => {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  // Эффект для симуляции генерации аватара
   useEffect(() => {
     let interval: number | undefined;
     
@@ -62,16 +60,15 @@ const RegisterPage = () => {
             setGeneratingAvatar(false);
             clearInterval(interval);
             
-            // После окончания генерации создаем случайный аватар
             const randomColor = Math.floor(Math.random() * 16777215).toString(16);
             const randomAvatar = `https://api.dicebear.com/6.x/bottts/svg?seed=${Date.now()}&backgroundColor=${randomColor}`;
             setGeneratedAvatarUrl(randomAvatar);
             
             return 100;
           }
-          return prevProgress + 10; // увеличиваем на 10% каждую секунду (10 секунд всего)
+          return prevProgress + 10;
         });
-      }, 1000); // обновляем каждую секунду
+      }, 1000);
     }
     
     return () => {
@@ -95,7 +92,6 @@ const RegisterPage = () => {
     setIsLoading(true);
     
     try {
-      // Дополнительные данные профиля
       const profileData = {
         telegramLink,
         githubLink,
