@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -44,10 +43,16 @@ const RegisterPage = () => {
   const [generationProgress, setGenerationProgress] = useState(0);
   const [generatedAvatarUrl, setGeneratedAvatarUrl] = useState<string | null>(null);
   
-  const { register } = useAuth();
+  const { register, isAuthenticated } = useAuth();
   const navigate = useNavigate();
   const { t } = useTranslation();
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate('/home');
+    }
+  }, [isAuthenticated, navigate]);
+  
   useEffect(() => {
     let interval: number | undefined;
     
@@ -159,7 +164,7 @@ const RegisterPage = () => {
               className="text-blue-900 dark:text-blue-300 hover:text-blue-600"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
-              {t("goBack")}
+              {t("language") === "ru" ? "Вернуться ко входу" : "Back to login"}
             </Button>
           </div>
           <CardTitle>{t("register")}</CardTitle>

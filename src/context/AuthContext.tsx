@@ -3,7 +3,7 @@ import React, { createContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useEmailService } from "../hooks/useEmailService";
 
-// Пустой массив пользователей для инициализации
+// Clear the users array for initialization
 const sampleUsers: any[] = [];
 
 export interface User {
@@ -55,21 +55,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { sendEmail } = useEmailService();
 
-  // Загрузка пользователей из localStorage при инициализации
+  // Clear all users and reset localStorage on initialization
   useEffect(() => {
-    const storedUser = localStorage.getItem("devnet_user");
-    const storedUsers = localStorage.getItem("devnet_users");
+    // Clear localStorage on first load to reset all accounts
+    localStorage.removeItem("devnet_users");
+    localStorage.removeItem("devnet_user");
     
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error("Failed to parse stored user:", error);
-        localStorage.removeItem("devnet_user");
-      }
-    }
+    const storedUsers = localStorage.getItem("devnet_users");
     
     if (storedUsers) {
       try {
@@ -84,14 +76,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  // Сохранение пользователей в localStorage при изменении
+  // Save users to localStorage when they change
   useEffect(() => {
     localStorage.setItem("devnet_users", JSON.stringify(users));
   }, [users]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Найти пользователя с соответствующим email и паролем
+      // Find user with matching email and password
       const foundUser = users.find(
         (u) => u.email === email && u.password === password
       );
@@ -117,26 +109,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profileData: any
   ): Promise<boolean> => {
     try {
-      // Проверка, существует ли пользователь с таким email
+      // Check if user with this email already exists
       const existingUser = users.find((u) => u.email === email);
       if (existingUser) {
         toast.error("Пользователь с таким email уже существует");
         return false;
       }
 
-      // Определение аватара
+      // Determine avatar
       let avatarUrl = "";
       if (profileData.generatedAvatarUrl) {
         avatarUrl = profileData.generatedAvatarUrl;
       }
 
-      // Создание нового пользователя
+      // Create new user with current registration date
+      const registrationDate = new Date().toISOString().split('T')[0];
       const newUser = {
         id: Date.now().toString(),
         username,
         email,
         password,
-        registrationDate: profileData.registrationDate || new Date().toISOString().split("T")[0],
+        registrationDate: registrationDate,
         telegramLink: profileData.telegramLink || "",
         githubLink: profileData.githubLink || "",
         languages: profileData.languages || [],
@@ -146,9 +139,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatar: avatarUrl || "",
       };
 
-      // Добавляем пользователя в основной список
+      // Add user to list and login immediately
       const updatedUsers = [...users, newUser];
       setUsers(updatedUsers);
+      
+      // Auto-login the user after registration
+      setUser(newUser);
+      setIsAuthenticated(true);
+      localStorage.setItem("devnet_user", JSON.stringify(newUser));
       
       return true;
     } catch (error) {
@@ -164,12 +162,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const updateUser = (userData: any) => {
-    // Обновление текущего пользователя
+    // Update current user
     const updatedUser = { ...user, ...userData };
     setUser(updatedUser as User);
     localStorage.setItem("devnet_user", JSON.stringify(updatedUser));
 
-    // Обновление в списке пользователей
+    // Update in users list
     const updatedUsers = users.map((u) =>
       u.id === user?.id ? updatedUser : u
     );
@@ -180,11 +178,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       if (!user) return false;
 
-      // Удаление пользователя из списка
+      // Remove user from list
       const updatedUsers = users.filter((u) => u.id !== user.id);
       setUsers(updatedUsers);
       
-      // Выход из системы
+      // Logout
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem("devnet_user");

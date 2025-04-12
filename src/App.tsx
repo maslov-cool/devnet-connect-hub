@@ -24,7 +24,7 @@ import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
 
-// Компонент для защищенных маршрутов
+// Component for protected routes
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
   
@@ -46,23 +46,44 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <Routes>
-                  {/* Перенаправляем корневой путь на страницу входа */}
-                  <Route path="/" element={<Navigate to="/login" replace />} />
+                  {/* Direct to home page by default */}
+                  <Route path="/" element={<Navigate to="/home" replace />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   
-                  {/* Защищенные маршруты */}
-                  <Route path="/" element={
-                    <Layout />
-                  }>
-                    <Route path="home" element={<Index />} />
-                    <Route path="messages" element={<MessagesPage />} />
-                    <Route path="messages/:userId" element={<ChatPage />} />
+                  {/* Routes inside Layout */}
+                  <Route path="/" element={<Layout />}>
+                    {/* Home page shows all developers */}
+                    <Route path="home" element={
+                      <Index />
+                    } />
+                    <Route path="messages" element={
+                      <ProtectedRoute>
+                        <MessagesPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="messages/:userId" element={
+                      <ProtectedRoute>
+                        <ChatPage />
+                      </ProtectedRoute>
+                    } />
                     <Route path="about" element={<AboutCreatorsPage />} />
                     <Route path="for-developers" element={<ForDevelopersPage />} />
-                    <Route path="profile/:id" element={<ProfilePage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="recommended-users" element={<RecommendedUsersPage />} />
+                    <Route path="profile/:id" element={
+                      <ProtectedRoute>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="settings" element={
+                      <ProtectedRoute>
+                        <SettingsPage />
+                      </ProtectedRoute>
+                    } />
+                    <Route path="recommended-users" element={
+                      <ProtectedRoute>
+                        <RecommendedUsersPage />
+                      </ProtectedRoute>
+                    } />
                   </Route>
                   
                   <Route path="*" element={<NotFound />} />

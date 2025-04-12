@@ -10,40 +10,31 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import * as XLSX from 'xlsx';
-
-interface User {
-  id: string;
-  name: string;
-  telegram: string;
-  registrationDate: string;
-}
+import { useAuth } from "../hooks/useAuth"; // Added this import
 
 const ForDevelopersPage = () => {
   const { t } = useTranslation();
+  const { users } = useAuth(); // Get real users data from auth context
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [searchQuery, setSearchQuery] = useState("");
 
-  const users: User[] = [
-    {
-      id: "1",
-      name: "Зорин Илья",
-      telegram: "ilazorin",
-      registrationDate: "9 апр. 2025 г., 15:22"
-    },
-    {
-      id: "2",
-      name: "Маслов Александр",
-      telegram: "ten-fun",
-      registrationDate: "9 апр. 2025 г., 15:23"
-    }
-  ];
-
+  // Use real users for the developer table
   const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    user.telegram.toLowerCase().includes(searchQuery.toLowerCase())
+    user.username.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    (user.telegramLink && user.telegramLink.toLowerCase().includes(searchQuery.toLowerCase())) ||
+    (user.email && user.email.toLowerCase().includes(searchQuery.toLowerCase()))
   );
+
+  // Format user data for display in the table
+  const formattedUsers = filteredUsers.map(user => ({
+    id: user.id,
+    name: user.username,
+    telegram: user.telegramLink ? user.telegramLink.replace('https://t.me/', '') : '-',
+    email: user.email,
+    registrationDate: user.registrationDate || new Date().toLocaleDateString()
+  }));
 
   const allowedUsers = [
     { username: "ilazorin", password: "243546" },
@@ -59,16 +50,16 @@ const ForDevelopersPage = () => {
       setIsAuthenticated(true);
       toast.success(t("accessGranted"));
     } else {
-      toast.error(t("Неверные учетные данные"));
+      toast.error(t("language") === "ru" ? "Неверные учетные данные" : "Invalid credentials");
     }
   };
 
   const handleExportToExcel = () => {
-    const ws = XLSX.utils.json_to_sheet(users);
+    const ws = XLSX.utils.json_to_sheet(formattedUsers);
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(wb, ws, "Users");
     XLSX.writeFile(wb, "devnet_users.xlsx");
-    toast.success(t("Экспорт в Excel выполнен"));
+    toast.success(t("language") === "ru" ? "Экспорт в Excel выполнен" : "Export to Excel completed");
   };
 
   return (
@@ -79,7 +70,7 @@ const ForDevelopersPage = () => {
             <CardHeader>
               <CardTitle>{t("forDevelopers")}</CardTitle>
               <CardDescription>
-                {t("Пожалуйста, войдите для доступа к данным")}
+                {t("language") === "ru" ? "Пожалуйста, войдите для доступа к данным" : "Please log in to access data"}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -165,21 +156,23 @@ const ForDevelopersPage = () => {
                       <TableRow>
                         <TableHead>{t("name")}</TableHead>
                         <TableHead>{t("telegram")}</TableHead>
+                        <TableHead>{t("email")}</TableHead>
                         <TableHead>{t("registrationDate")}</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {filteredUsers.map((user) => (
+                      {formattedUsers.map((user) => (
                         <TableRow key={user.id}>
                           <TableCell className="font-medium">{user.name}</TableCell>
                           <TableCell>{user.telegram}</TableCell>
+                          <TableCell>{user.email}</TableCell>
                           <TableCell>{user.registrationDate}</TableCell>
                         </TableRow>
                       ))}
-                      {filteredUsers.length === 0 && (
+                      {formattedUsers.length === 0 && (
                         <TableRow>
-                          <TableCell colSpan={3} className="text-center py-8 text-muted-foreground">
-                            {t("Пользователи не найдены")}
+                          <TableCell colSpan={4} className="text-center py-8 text-muted-foreground">
+                            {t("language") === "ru" ? "Пользователи не найдены" : "No users found"}
                           </TableCell>
                         </TableRow>
                       )}

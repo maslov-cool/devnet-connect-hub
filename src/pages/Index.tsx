@@ -1,28 +1,30 @@
 
-import { Button } from "@/components/ui/button";
+import { useState, useEffect } from "react";
 import { useTranslation } from "../hooks/useTranslation";
 import { useAuth } from "../hooks/useAuth";
-import { useState, useEffect } from "react";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import DeveloperCard from "../components/DeveloperCard";
-import { Navigate } from "react-router-dom";
+import { Navigate, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Link } from "react-router-dom";
 
 const Index = () => {
   const { t } = useTranslation();
   const { users, user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState(users);
 
-  // Перенаправляем на страницу логина, если пользователь не аутентифицирован
+  // Redirect to login if not authenticated
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
-      // Показываем всех пользователей
+      // Show all users
       setFilteredUsers(users);
     } else {
       const query = searchQuery.toLowerCase();
@@ -30,7 +32,8 @@ const Index = () => {
         (u) =>
           (u.username.toLowerCase().includes(query) ||
             (u.skills && Array.isArray(u.skills) && u.skills.some(skill => skill.toLowerCase().includes(query))) ||
-            (u.itPosition && u.itPosition.toLowerCase().includes(query)))
+            (u.itPosition && u.itPosition.toLowerCase().includes(query)) ||
+            (u.languages && Array.isArray(u.languages) && u.languages.some(lang => lang.toLowerCase().includes(query))))
       );
       setFilteredUsers(filtered);
     }
@@ -38,6 +41,8 @@ const Index = () => {
 
   return (
     <div className="container mx-auto px-4 py-8">
+      <h1 className="text-3xl font-bold mb-6">{t("language") === "ru" ? "Разработчики" : "Developers"}</h1>
+      
       <div className="mb-8 relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
         <Input
