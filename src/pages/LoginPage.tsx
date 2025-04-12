@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -6,7 +7,6 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { toast } from "sonner";
-import { ArrowLeft } from "lucide-react";
 
 const LoginPage = () => {
   const [email, setEmail] = useState("");
@@ -51,17 +51,6 @@ const LoginPage = () => {
     <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <div className="flex justify-start w-full mb-2">
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => navigate("/home")}
-              className="text-blue-900 dark:text-blue-300 hover:text-blue-600"
-            >
-              <ArrowLeft className="mr-1 h-4 w-4" />
-              {t("goBack")}
-            </Button>
-          </div>
           <CardTitle>{t("login")}</CardTitle>
           <CardDescription>
             {t("language") === "ru" ? "Войдите в свой аккаунт для доступа к DevNet" : "Login to your account to access DevNet"}

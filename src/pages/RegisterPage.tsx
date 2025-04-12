@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -92,6 +93,7 @@ const RegisterPage = () => {
     setIsLoading(true);
     
     try {
+      const registrationDate = new Date().toISOString().split("T")[0];
       const profileData = {
         telegramLink,
         githubLink,
@@ -101,7 +103,8 @@ const RegisterPage = () => {
         projects,
         useRandomAvatar: useRandomAvatar || !!generatedAvatarUrl,
         skipAvatar,
-        generatedAvatarUrl
+        generatedAvatarUrl,
+        registrationDate
       };
       
       const success = await register(username, email, password, profileData);
@@ -152,7 +155,7 @@ const RegisterPage = () => {
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate("/home")}
+              onClick={() => navigate("/login")}
               className="text-blue-900 dark:text-blue-300 hover:text-blue-600"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />

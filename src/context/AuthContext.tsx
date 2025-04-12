@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useEmailService } from "../hooks/useEmailService";
@@ -18,7 +19,6 @@ export interface User {
   itPosition?: string;
   registrationDate: string;
   projects?: string;
-  isEmailVerified?: boolean;
   telegramLink?: string;
   githubLink?: string;
 }
@@ -32,10 +32,6 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (userData: any) => void;
   deleteAccount: () => Promise<boolean>;
-  forgotPassword: (email: string) => Promise<boolean>;
-  resetPassword: (email: string, newPassword: string, token: string) => Promise<boolean>;
-  verifyEmail: (email: string, token: string) => Promise<boolean>;
-  pendingUsers: User[];
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -47,10 +43,6 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   updateUser: () => {},
   deleteAccount: async () => false,
-  forgotPassword: async () => false,
-  resetPassword: async () => false,
-  verifyEmail: async () => false,
-  pendingUsers: [],
 });
 
 interface AuthProviderProps {
@@ -60,35 +52,42 @@ interface AuthProviderProps {
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
-  const [pendingUsers, setPendingUsers] = useState<User[]>([]);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { sendEmail } = useEmailService();
 
+  // Загрузка пользователей из localStorage при инициализации
   useEffect(() => {
-    // Очищаем существующих пользователей при инициализации
-    localStorage.removeItem("devnet_users");
-    localStorage.removeItem("devnet_pending_users");
-    localStorage.removeItem("devnet_user");
+    const storedUser = localStorage.getItem("devnet_user");
+    const storedUsers = localStorage.getItem("devnet_users");
     
-    // Инициализируем пустыми массивами
-    setUsers([]);
-    setPendingUsers([]);
-    setUser(null);
-    setIsAuthenticated(false);
+    if (storedUser) {
+      try {
+        const parsedUser = JSON.parse(storedUser);
+        setUser(parsedUser);
+        setIsAuthenticated(true);
+      } catch (error) {
+        console.error("Failed to parse stored user:", error);
+        localStorage.removeItem("devnet_user");
+      }
+    }
     
-    localStorage.setItem("devnet_users", JSON.stringify([]));
-    localStorage.setItem("devnet_pending_users", JSON.stringify([]));
+    if (storedUsers) {
+      try {
+        const parsedUsers = JSON.parse(storedUsers);
+        setUsers(parsedUsers);
+      } catch (error) {
+        console.error("Failed to parse stored users:", error);
+        localStorage.setItem("devnet_users", JSON.stringify([]));
+      }
+    } else {
+      localStorage.setItem("devnet_users", JSON.stringify([]));
+    }
   }, []);
 
   // Сохранение пользователей в localStorage при изменении
   useEffect(() => {
     localStorage.setItem("devnet_users", JSON.stringify(users));
   }, [users]);
-  
-  // Сохранение ожидающих подтверждения пользователей
-  useEffect(() => {
-    localStorage.setItem("devnet_pending_users", JSON.stringify(pendingUsers));
-  }, [pendingUsers]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -98,7 +97,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       );
 
       if (foundUser) {
-        // Больше не проверяем верификацию email
         setUser(foundUser);
         setIsAuthenticated(true);
         localStorage.setItem("devnet_user", JSON.stringify(foundUser));
@@ -132,14 +130,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatarUrl = profileData.generatedAvatarUrl;
       }
 
-      // Создание нового пользователя - сразу добавляем в основной список
+      // Создание нового пользователя
       const newUser = {
         id: Date.now().toString(),
         username,
         email,
         password,
-        registrationDate: new Date().toISOString().split("T")[0],
-        isEmailVerified: true, // Сразу помечае�� пользователя как верифицированного
+        registrationDate: profileData.registrationDate || new Date().toISOString().split("T")[0],
         telegramLink: profileData.telegramLink || "",
         githubLink: profileData.githubLink || "",
         languages: profileData.languages || [],
@@ -156,29 +153,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       return true;
     } catch (error) {
       console.error("Registration error:", error);
-      return false;
-    }
-  };
-
-  const verifyEmail = async (email: string, token: string): Promise<boolean> => {
-    try {
-      const pendingUser = pendingUsers.find((u) => u.email === email);
-      
-      if (!pendingUser) {
-        toast.error("Пользователь не найден или уже подтвержден");
-        return false;
-      }
-      
-      const verifiedUser = { ...pendingUser, isEmailVerified: true };
-      const updatedUsers = [...users, verifiedUser];
-      setUsers(updatedUsers);
-      
-      const updatedPendingUsers = pendingUsers.filter(u => u.email !== email);
-      setPendingUsers(updatedPendingUsers);
-      
-      return true;
-    } catch (error) {
-      console.error("Email verification error:", error);
       return false;
     }
   };
@@ -222,74 +196,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const forgotPassword = async (email: string): Promise<boolean> => {
-    try {
-      // Проверяем, существует ли пользователь с таким email
-      const foundUser = users.find((u) => u.email === email);
-      
-      if (!foundUser) {
-        return false;
-      }
-      
-      // Создание ссылки для сброса пароля
-      const resetToken = `reset-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-      const resetLink = `${window.location.origin}/reset-password?email=${encodeURIComponent(email)}&token=${resetToken}`;
-      const emailContent = `
-        <h2>Сброс пароля в DevNet</h2>
-        <p>Здравствуйте, ${foundUser.username}!</p>
-        <p>Для сброса пароля, пожалуйста, перейдите по следующей ссылке:</p>
-        <p><a href="${resetLink}" style="padding: 10px 20px; background-color: #0f4c81; color: white; text-decoration: none; border-radius: 5px;">Сбросить пароль</a></p>
-        <p>Если вы не запрашивали сброс пароля, просто проигнорируйте это письмо.</p>
-        <p>С уважением, Команда DevNet</p>
-      `;
-      
-      try {
-        await sendEmail({
-          name: foundUser.username,
-          email: email,
-          message: emailContent,
-          subject: "DevNet: Сброс пароля"
-        });
-      } catch (error) {
-        console.error("Error sending password reset email:", error);
-        return false;
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Forgot password error:", error);
-      return false;
-    }
-  };
-
-  const resetPassword = async (email: string, newPassword: string, token: string): Promise<boolean> => {
-    try {
-      // В реальном приложении здесь была бы проверка токена
-      
-      // Обновляем пароль пользователя
-      const updatedUsers = users.map(user => {
-        if (user.email === email) {
-          return { ...user, password: newPassword };
-        }
-        return user;
-      });
-      
-      setUsers(updatedUsers);
-      
-      // Если текущий пользователь - это тот, чей пароль меняется
-      if (user && user.email === email) {
-        const updatedUser = { ...user, password: newPassword };
-        setUser(updatedUser);
-        localStorage.setItem("devnet_user", JSON.stringify(updatedUser));
-      }
-      
-      return true;
-    } catch (error) {
-      console.error("Reset password error:", error);
-      return false;
-    }
-  };
-
   return (
     <AuthContext.Provider
       value={{
@@ -301,10 +207,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         logout,
         updateUser,
         deleteAccount,
-        forgotPassword,
-        resetPassword,
-        verifyEmail,
-        pendingUsers,
       }}
     >
       {children}

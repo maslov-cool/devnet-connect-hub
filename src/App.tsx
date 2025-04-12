@@ -20,8 +20,20 @@ import { AuthProvider } from "./context/AuthContext";
 import { LanguageProvider } from "./context/LanguageContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import RecommendedUsersPage from "./pages/RecommendedUsersPage";
+import { useAuth } from "./hooks/useAuth";
 
 const queryClient = new QueryClient();
+
+// Компонент для защищенных маршрутов
+const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated } = useAuth();
+  
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+  
+  return <>{children}</>;
+};
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
@@ -38,8 +50,11 @@ const App = () => (
                   <Route path="/" element={<Navigate to="/login" replace />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
-                  <Route path="/recommended-users" element={<RecommendedUsersPage />} />
-                  <Route path="/" element={<Layout />}>
+                  
+                  {/* Защищенные маршруты */}
+                  <Route path="/" element={
+                    <Layout />
+                  }>
                     <Route path="home" element={<Index />} />
                     <Route path="messages" element={<MessagesPage />} />
                     <Route path="messages/:userId" element={<ChatPage />} />
@@ -47,7 +62,9 @@ const App = () => (
                     <Route path="for-developers" element={<ForDevelopersPage />} />
                     <Route path="profile/:id" element={<ProfilePage />} />
                     <Route path="settings" element={<SettingsPage />} />
+                    <Route path="recommended-users" element={<RecommendedUsersPage />} />
                   </Route>
+                  
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </BrowserRouter>
