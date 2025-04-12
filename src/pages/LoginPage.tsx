@@ -33,7 +33,7 @@ const LoginPage = () => {
       
       if (success) {
         toast.success(t("language") === "ru" ? "Успешный вход" : "Login successful");
-        navigate("/");
+        navigate("/home");
       } else {
         toast.error(t("language") === "ru" ? "Неверный email или пароль" : "Invalid email or password");
       }
@@ -46,14 +46,14 @@ const LoginPage = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-start w-full mb-2">
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
               className="text-blue-900 dark:text-blue-300 hover:text-blue-600"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />
@@ -94,15 +94,6 @@ const LoginPage = () => {
                   placeholder={t("language") === "ru" ? "Введите пароль" : "Enter password"}
                   autoComplete="current-password"
                 />
-              </div>
-              
-              <div className="flex justify-end">
-                <Link
-                  to="/forgot-password"
-                  className="text-sm text-blue-900 dark:text-blue-300 hover:underline"
-                >
-                  {t("language") === "ru" ? "Забыли пароль?" : "Forgot password?"}
-                </Link>
               </div>
               
               <Button type="submit" className="w-full bg-blue-900 hover:bg-blue-800" disabled={isLoading}>

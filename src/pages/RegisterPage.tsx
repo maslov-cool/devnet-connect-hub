@@ -1,5 +1,5 @@
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -7,7 +7,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { useAuth } from "../hooks/useAuth";
 import { useTranslation } from "../hooks/useTranslation";
 import { toast } from "sonner";
-import { ArrowLeft, RefreshCw, CheckCircle } from "lucide-react";
+import { ArrowLeft, RefreshCw } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 import { 
   Select, 
@@ -63,7 +63,6 @@ const RegisterPage = () => {
             clearInterval(interval);
             
             // После окончания генерации создаем случайный аватар
-            // В реальном приложении здесь был бы запрос к API для создания аватара
             const randomColor = Math.floor(Math.random() * 16777215).toString(16);
             const randomAvatar = `https://api.dicebear.com/6.x/bottts/svg?seed=${Date.now()}&backgroundColor=${randomColor}`;
             setGeneratedAvatarUrl(randomAvatar);
@@ -113,9 +112,9 @@ const RegisterPage = () => {
       
       if (success) {
         toast.success(t("language") === "ru" 
-          ? "Регистрация успешна! Проверьте вашу почту для подтверждения аккаунта." 
-          : "Registration successful! Check your email to verify your account.");
-        navigate("/email-verification");
+          ? "Регистрация успешна!" 
+          : "Registration successful!");
+        navigate("/recommended-users");
       }
     } catch (error) {
       console.error(error);
@@ -150,14 +149,14 @@ const RegisterPage = () => {
   };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
           <div className="flex justify-start w-full mb-2">
             <Button 
               variant="ghost" 
               size="sm" 
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/home")}
               className="text-blue-900 dark:text-blue-300 hover:text-blue-600"
             >
               <ArrowLeft className="mr-1 h-4 w-4" />

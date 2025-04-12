@@ -24,7 +24,8 @@ const Index = () => {
         (u) =>
           (user ? u.id !== user.id : true) &&
           (u.username.toLowerCase().includes(query) ||
-            (u.skills && Array.isArray(u.skills) && u.skills.some(skill => skill.toLowerCase().includes(query))))
+            (u.skills && Array.isArray(u.skills) && u.skills.some(skill => skill.toLowerCase().includes(query))) ||
+            (u.itPosition && u.itPosition.toLowerCase().includes(query)))
       );
       setFilteredUsers(filtered);
     }
@@ -35,7 +36,7 @@ const Index = () => {
       <div className="mb-8 relative">
         <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
         <Input
-          placeholder={t("searchByName")}
+          placeholder={t("language") === "ru" ? "Поиск по имени, языкам программирования или должности" : "Search by name, programming languages or position"}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className="pl-10"
