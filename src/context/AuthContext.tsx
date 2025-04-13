@@ -1,4 +1,3 @@
-
 import React, { createContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useEmailService } from "../hooks/useEmailService";
@@ -29,10 +28,9 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (userData: any) => void;
   deleteAccount: () => Promise<boolean>;
-  // Add the missing methods that are causing build errors
-  verifyEmail: (token: string) => Promise<boolean>;
+  verifyEmail: (email: string, token: string) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<boolean>;
-  resetPassword: (token: string, password: string) => Promise<boolean>;
+  resetPassword: (email: string, password: string, token: string) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -44,7 +42,6 @@ export const AuthContext = createContext<AuthContextType>({
   logout: () => {},
   updateUser: () => {},
   deleteAccount: async () => false,
-  // Add the missing methods that are causing build errors
   verifyEmail: async () => false,
   forgotPassword: async () => false,
   resetPassword: async () => false,
@@ -54,11 +51,9 @@ interface AuthProviderProps {
   children: React.ReactNode;
 }
 
-// Key for localStorage
 const USERS_STORAGE_KEY = "devnet_users";
 const CURRENT_USER_STORAGE_KEY = "devnet_user";
 
-// Function to save messages between users
 const saveMessages = (messages: any[], conversationKey: string) => {
   localStorage.setItem(`chat_${conversationKey}`, JSON.stringify(messages));
 };
@@ -69,7 +64,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const { sendEmail } = useEmailService();
 
-  // Load users from localStorage on component mount
   useEffect(() => {
     const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
     
@@ -79,15 +73,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUsers(parsedUsers);
       } catch (error) {
         console.error("Failed to parse stored users:", error);
-        // Initialize with empty array if parsing fails
         localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
       }
     } else {
-      // Initialize with empty array if no users exist
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
     }
 
-    // Check if there's a logged-in user
     const storedUser = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
     if (storedUser) {
       try {
@@ -101,14 +92,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   }, []);
 
-  // Save users to localStorage when they change
   useEffect(() => {
     localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
   }, [users]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
-      // Find user with matching email and password
       const foundUser = users.find(
         (u) => u.email === email && u.password === password
       );
@@ -134,20 +123,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     profileData: any
   ): Promise<boolean> => {
     try {
-      // Check if user with this email already exists
       const existingUser = users.find((u) => u.email === email);
       if (existingUser) {
         toast.error("Пользователь с таким email уже существует");
         return false;
       }
 
-      // Determine avatar
       let avatarUrl = "";
       if (profileData.generatedAvatarUrl) {
         avatarUrl = profileData.generatedAvatarUrl;
       }
 
-      // Create new user with current registration date
       const registrationDate = new Date().toISOString().split('T')[0];
       const newUser = {
         id: Date.now().toString(),
@@ -164,11 +150,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         avatar: avatarUrl || "",
       };
 
-      // Add user to list and login immediately
       const updatedUsers = [...users, newUser];
       setUsers(updatedUsers);
       
-      // Auto-login the user after registration
       setUser(newUser);
       setIsAuthenticated(true);
       localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(newUser));
@@ -188,12 +172,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   };
 
   const updateUser = (userData: any) => {
-    // Update current user
     const updatedUser = { ...user, ...userData };
     setUser(updatedUser as User);
     localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(updatedUser));
 
-    // Update in users list
     const updatedUsers = users.map((u) =>
       u.id === user?.id ? updatedUser : u
     );
@@ -205,12 +187,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       if (!user) return false;
 
-      // Remove user from list
       const updatedUsers = users.filter((u) => u.id !== user.id);
       setUsers(updatedUsers);
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
       
-      // Logout
       setUser(null);
       setIsAuthenticated(false);
       localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
@@ -222,27 +202,32 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  // Implement the missing methods to fix build errors
-  const verifyEmail = async (token: string): Promise<boolean> => {
-    // In a real app, you would verify the token with the backend
-    // For now, we'll just return true to fix the build error
+  const verifyEmail = async (email: string, token: string): Promise<boolean> => {
+    console.log(`Verifying email for ${email} with token ${token}`);
     return true;
   };
 
   const forgotPassword = async (email: string): Promise<boolean> => {
-    // Find if the user exists
+    console.log(`Forgot password requested for email: ${email}`);
     const userExists = users.some(u => u.email === email);
     if (userExists) {
-      // In a real app, you would send an email with a reset token
-      // For now, we'll just return true
       return true;
     }
     return false;
   };
 
-  const resetPassword = async (token: string, password: string): Promise<boolean> => {
-    // In a real app, you would verify the token and update the user's password
-    // For now, we'll just return true to fix the build error
+  const resetPassword = async (email: string, password: string, token: string): Promise<boolean> => {
+    console.log(`Resetting password for ${email} with token ${token}`);
+    const updatedUsers = users.map(u => {
+      if (u.email === email) {
+        return { ...u, password };
+      }
+      return u;
+    });
+    
+    setUsers(updatedUsers);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+    
     return true;
   };
 

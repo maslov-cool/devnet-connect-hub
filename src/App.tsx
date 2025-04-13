@@ -21,6 +21,9 @@ import { LanguageProvider } from "./context/LanguageContext";
 import { NotificationProvider } from "./context/NotificationContext";
 import RecommendedUsersPage from "./pages/RecommendedUsersPage";
 import { useAuth } from "./hooks/useAuth";
+import EmailConfirmationPage from "./pages/EmailConfirmationPage";
+import ResetPasswordPage from "./pages/ResetPasswordPage";
+import ForgotPasswordPage from "./pages/ForgotPasswordPage";
 
 const queryClient = new QueryClient();
 
@@ -50,6 +53,9 @@ const App = () => (
                   <Route path="/" element={<Navigate to="/home" replace />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
+                  <Route path="/email-confirmation" element={<EmailConfirmationPage />} />
+                  <Route path="/reset-password" element={<ResetPasswordPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
                   
                   {/* Routes inside Layout */}
                   <Route path="/" element={<Layout />}>
