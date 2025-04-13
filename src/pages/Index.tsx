@@ -5,20 +5,15 @@ import { useAuth } from "../hooks/useAuth";
 import { Input } from "@/components/ui/input";
 import { Search } from "lucide-react";
 import DeveloperCard from "../components/DeveloperCard";
-import { Navigate, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import { Button } from "@/components/ui/button";
 
 const Index = () => {
   const { t } = useTranslation();
-  const { users, user, isAuthenticated } = useAuth();
-  const navigate = useNavigate();
+  const { users, isAuthenticated } = useAuth();
   
   const [searchQuery, setSearchQuery] = useState("");
   const [filteredUsers, setFilteredUsers] = useState(users);
-
-  // Redirect to login if not authenticated
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />;
-  }
 
   useEffect(() => {
     if (searchQuery.trim() === "") {
@@ -51,19 +46,45 @@ const Index = () => {
         />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-        {filteredUsers.length > 0 ? (
-          filteredUsers.map((developer) => (
-            <DeveloperCard key={developer.id} developer={developer} />
-          ))
-        ) : (
-          <div className="col-span-2 text-center py-8">
-            {t("language") === "ru" 
-              ? "Разработчиков не найдено" 
-              : "No developers found"}
+      {isAuthenticated ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {filteredUsers.length > 0 ? (
+            filteredUsers.map((developer) => (
+              <DeveloperCard key={developer.id} developer={developer} />
+            ))
+          ) : (
+            <div className="col-span-2 text-center py-8">
+              {t("language") === "ru" 
+                ? "Разработчиков не найдено" 
+                : "No developers found"}
+            </div>
+          )}
+        </div>
+      ) : (
+        <div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((developer) => (
+                <DeveloperCard key={developer.id} developer={developer} />
+              ))
+            ) : (
+              <div className="col-span-2 text-center py-8">
+                {t("language") === "ru" 
+                  ? "Разработчиков не найдено" 
+                  : "No developers found"}
+              </div>
+            )}
           </div>
-        )}
-      </div>
+          <div className="flex justify-center mt-8">
+            <Link to="/login">
+              <Button className="mr-4">{t("login")}</Button>
+            </Link>
+            <Link to="/register">
+              <Button variant="outline">{t("register")}</Button>
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

@@ -49,7 +49,7 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <Routes>
-                  {/* Direct to home page by default */}
+                  {/* Redirect to login or home based on authentication */}
                   <Route path="/" element={<Navigate to="/home" replace />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
@@ -60,11 +60,7 @@ const App = () => (
                   {/* Routes inside Layout */}
                   <Route path="/" element={<Layout />}>
                     {/* Home page shows all developers */}
-                    <Route path="home" element={
-                      <ProtectedRoute>
-                        <Index />
-                      </ProtectedRoute>
-                    } />
+                    <Route path="home" element={<Index />} />
                     <Route path="messages" element={
                       <ProtectedRoute>
                         <MessagesPage />

@@ -1,27 +1,40 @@
-import { useState } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { useAuth } from "../hooks/useAuth";
-import { useTranslation } from "../hooks/useTranslation";
-import { toast } from "sonner";
+
+import { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import { useAuth } from '../hooks/useAuth';
+import { useTranslation } from '../hooks/useTranslation';
+import { toast } from 'sonner';
+import { Eye, EyeOff } from 'lucide-react';
 
 const ResetPasswordPage = () => {
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+  const [password, setPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  
-  const { resetPassword } = useAuth();
-  const navigate = useNavigate();
+  const [showPassword, setShowPassword] = useState(false);
+  const [email, setEmail] = useState('');
   const location = useLocation();
+  const navigate = useNavigate();
+  const { resetPassword } = useAuth();
   const { t } = useTranslation();
-  
-  // Get token from URL
-  const queryParams = new URLSearchParams(location.search);
-  const token = queryParams.get("token");
-  const email = queryParams.get("email");
-  
+
+  useEffect(() => {
+    // Get email from URL params
+    const queryParams = new URLSearchParams(location.search);
+    const emailParam = queryParams.get('email');
+    
+    if (emailParam) {
+      setEmail(emailParam);
+    } else {
+      toast.error(t("language") === "ru" 
+        ? "Email не указан" 
+        : "Email is not specified");
+      navigate('/forgot-password');
+    }
+  }, [location.search, navigate]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -31,69 +44,49 @@ const ResetPasswordPage = () => {
     }
     
     if (password !== confirmPassword) {
-      toast.error(t("language") === "ru" ? "Пароли не совпадают" : "Passwords do not match");
+      toast.error(t("language") === "ru" ? "Пароли не совпадают" : "Passwords don't match");
       return;
     }
     
-    if (!token || !email) {
-      toast.error(t("language") === "ru" ? "Некорректная ссылка для сброса пароля" : "Invalid password reset link");
+    if (password.length < 6) {
+      toast.error(t("language") === "ru" 
+        ? "Пароль должен содержать не менее 6 символов" 
+        : "Password must be at least 6 characters long");
       return;
     }
     
     setIsLoading(true);
     
     try {
-      const success = await resetPassword(email, password, token);
+      const success = await resetPassword(email, password);
       
       if (success) {
-        toast.success(t("language") === "ru" ? "Пароль успешно изменен" : "Password has been reset successfully");
+        toast.success(t("language") === "ru" ? "Пароль успешно изменен" : "Password successfully reset");
         navigate("/login");
       } else {
-        toast.error(t("language") === "ru" ? "Не удалось сбросить пароль" : "Failed to reset password");
+        toast.error(t("language") === "ru" ? "Не удалось изменить пароль" : "Failed to reset password");
       }
     } catch (error) {
       console.error(error);
-      toast.error(t("language") === "ru" ? "Произошла ошибка при сбросе пароля" : "An error occurred while resetting your password");
+      toast.error(t("language") === "ru" ? "Произошла ошибка" : "An error occurred");
     } finally {
       setIsLoading(false);
     }
   };
-  
-  if (!token || !email) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader className="text-center">
-            <CardTitle className="text-red-500">
-              {t("language") === "ru" ? "Ошибка" : "Error"}
-            </CardTitle>
-            <CardDescription>
-              {t("language") === "ru" 
-                ? "Некорректная ссылка для сброса пароля"
-                : "Invalid password reset link"
-              }
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="text-center">
-            <Button onClick={() => navigate("/forgot-password")}>
-              {t("language") === "ru" ? "Попробовать снова" : "Try again"}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    );
-  }
+
+  const togglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
   
   return (
-    <div className="min-h-screen flex items-center justify-center bg-muted/30 p-4">
+    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>{t("language") === "ru" ? "Создание нового пароля" : "Create New Password"}</CardTitle>
+          <CardTitle>{t("language") === "ru" ? "Сброс пароля" : "Reset Password"}</CardTitle>
           <CardDescription>
             {t("language") === "ru" 
-              ? "Введите новый пароль для вашего аккаунта"
-              : "Enter a new password for your account"
-            }
+              ? "Создайте новый пароль для вашей учетной записи" 
+              : "Create a new password for your account"}
           </CardDescription>
         </CardHeader>
         <CardContent>
@@ -103,28 +96,37 @@ const ResetPasswordPage = () => {
                 <label htmlFor="password" className="block text-sm font-medium mb-1">
                   {t("language") === "ru" ? "Новый пароль" : "New Password"}
                 </label>
-                <Input
-                  id="password"
-                  type="password"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder={t("language") === "ru" ? "Введите новый пароль" : "Enter new password"}
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    placeholder={t("language") === "ru" ? "Введите новый пароль" : "Enter new password"}
+                  />
+                  <button 
+                    type="button"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2"
+                    onClick={togglePasswordVisibility}
+                  >
+                    {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                  </button>
+                </div>
               </div>
               
               <div>
-                <label htmlFor="confirm-password" className="block text-sm font-medium mb-1">
-                  {t("language") === "ru" ? "Подтверждение пароля" : "Confirm Password"}
+                <label htmlFor="confirmPassword" className="block text-sm font-medium mb-1">
+                  {t("language") === "ru" ? "Подтвердите пароль" : "Confirm Password"}
                 </label>
-                <Input
-                  id="confirm-password"
-                  type="password"
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  placeholder={t("language") === "ru" ? "Подтвердите новый пароль" : "Confirm new password"}
-                  autoComplete="new-password"
-                />
+                <div className="relative">
+                  <Input
+                    id="confirmPassword"
+                    type={showPassword ? "text" : "password"}
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    placeholder={t("language") === "ru" ? "Подтвердите пароль" : "Confirm password"}
+                  />
+                </div>
               </div>
               
               <Button type="submit" className="w-full bg-blue-900 hover:bg-blue-800" disabled={isLoading}>
@@ -148,12 +150,17 @@ const ResetPasswordPage = () => {
                     {t("language") === "ru" ? "Загрузка..." : "Loading..."}
                   </span>
                 ) : (
-                  t("language") === "ru" ? "Сохранить новый пароль" : "Save New Password"
+                  t("language") === "ru" ? "Изменить пароль" : "Reset Password"
                 )}
               </Button>
             </div>
           </form>
         </CardContent>
+        <CardFooter className="flex justify-center">
+          <Button variant="link" onClick={() => navigate("/login")}>
+            {t("language") === "ru" ? "Вернуться на страницу входа" : "Back to login"}
+          </Button>
+        </CardFooter>
       </Card>
     </div>
   );

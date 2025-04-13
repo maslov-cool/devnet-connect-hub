@@ -1,3 +1,4 @@
+
 import React, { createContext, useState, useEffect } from "react";
 import { toast } from "sonner";
 import { useEmailService } from "../hooks/useEmailService";
@@ -28,9 +29,9 @@ interface AuthContextType {
   logout: () => void;
   updateUser: (userData: any) => void;
   deleteAccount: () => Promise<boolean>;
-  verifyEmail: (email: string, token: string) => Promise<boolean>;
+  verifyEmail: (email: string) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<boolean>;
-  resetPassword: (email: string, password: string, token: string) => Promise<boolean>;
+  resetPassword: (email: string, password: string) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -54,6 +55,66 @@ interface AuthProviderProps {
 const USERS_STORAGE_KEY = "devnet_users";
 const CURRENT_USER_STORAGE_KEY = "devnet_user";
 
+// Predefined list of developers
+const defaultDevelopers: User[] = [
+  {
+    id: "1",
+    username: "Alex Smith",
+    email: "alex@example.com",
+    password: "password123",
+    avatar: "https://i.pravatar.cc/150?img=1",
+    skills: ["JavaScript", "React", "Node.js"],
+    languages: ["English", "Spanish"],
+    experience: "3-5",
+    itPosition: "Frontend Developer",
+    registrationDate: "2023-01-15",
+    telegramLink: "@alexsmith",
+    githubLink: "github.com/alexsmith"
+  },
+  {
+    id: "2",
+    username: "Maria Garcia",
+    email: "maria@example.com",
+    password: "password123",
+    avatar: "https://i.pravatar.cc/150?img=5",
+    skills: ["Python", "Django", "MySQL"],
+    languages: ["Spanish", "English", "French"],
+    experience: "5-10",
+    itPosition: "Backend Developer",
+    registrationDate: "2022-11-20",
+    telegramLink: "@mariagarcia",
+    githubLink: "github.com/mariagarcia"
+  },
+  {
+    id: "3",
+    username: "John Doe",
+    email: "john@example.com",
+    password: "password123",
+    avatar: "https://i.pravatar.cc/150?img=3",
+    skills: ["TypeScript", "React", "GraphQL"],
+    languages: ["English"],
+    experience: "1-3",
+    itPosition: "Full Stack Developer",
+    registrationDate: "2023-03-05",
+    telegramLink: "@johndoe",
+    githubLink: "github.com/johndoe"
+  },
+  {
+    id: "4",
+    username: "Sophia Wang",
+    email: "sophia@example.com",
+    password: "password123",
+    avatar: "https://i.pravatar.cc/150?img=9",
+    skills: ["Java", "Spring", "PostgreSQL"],
+    languages: ["Chinese", "English"],
+    experience: "3-5",
+    itPosition: "Backend Developer",
+    registrationDate: "2023-02-10",
+    telegramLink: "@sophiawang",
+    githubLink: "github.com/sophiawang"
+  }
+];
+
 const saveMessages = (messages: any[], conversationKey: string) => {
   localStorage.setItem(`chat_${conversationKey}`, JSON.stringify(messages));
 };
@@ -65,36 +126,13 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { sendEmail } = useEmailService();
 
   useEffect(() => {
-    const storedUsers = localStorage.getItem(USERS_STORAGE_KEY);
-    
-    if (storedUsers) {
-      try {
-        const parsedUsers = JSON.parse(storedUsers);
-        setUsers(parsedUsers);
-      } catch (error) {
-        console.error("Failed to parse stored users:", error);
-        localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
-      }
-    } else {
-      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify([]));
-    }
-
-    const storedUser = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
-    if (storedUser) {
-      try {
-        const parsedUser = JSON.parse(storedUser);
-        setUser(parsedUser);
-        setIsAuthenticated(true);
-      } catch (error) {
-        console.error("Failed to parse stored user:", error);
-        localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
-      }
-    }
+    // Clear any existing users and set our default developers
+    localStorage.removeItem(USERS_STORAGE_KEY);
+    localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
+    setUsers(defaultDevelopers);
+    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultDevelopers));
+    setIsAuthenticated(false);
   }, []);
-
-  useEffect(() => {
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(users));
-  }, [users]);
 
   const login = async (email: string, password: string): Promise<boolean> => {
     try {
@@ -202,8 +240,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
-  const verifyEmail = async (email: string, token: string): Promise<boolean> => {
-    console.log(`Verifying email for ${email} with token ${token}`);
+  const verifyEmail = async (email: string): Promise<boolean> => {
+    console.log(`Verifying email for ${email}`);
     return true;
   };
 
@@ -216,8 +254,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return false;
   };
 
-  const resetPassword = async (email: string, password: string, token: string): Promise<boolean> => {
-    console.log(`Resetting password for ${email} with token ${token}`);
+  const resetPassword = async (email: string, password: string): Promise<boolean> => {
+    console.log(`Resetting password for ${email}`);
     const updatedUsers = users.map(u => {
       if (u.email === email) {
         return { ...u, password };
