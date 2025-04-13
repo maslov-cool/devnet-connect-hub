@@ -55,65 +55,8 @@ interface AuthProviderProps {
 const USERS_STORAGE_KEY = "devnet_users";
 const CURRENT_USER_STORAGE_KEY = "devnet_user";
 
-// Predefined list of developers
-const defaultDevelopers: User[] = [
-  {
-    id: "1",
-    username: "Alex Smith",
-    email: "alex@example.com",
-    password: "password123",
-    avatar: "https://i.pravatar.cc/150?img=1",
-    skills: ["JavaScript", "React", "Node.js"],
-    languages: ["English", "Spanish"],
-    experience: "3-5",
-    itPosition: "Frontend Developer",
-    registrationDate: "2023-01-15",
-    telegramLink: "@alexsmith",
-    githubLink: "github.com/alexsmith"
-  },
-  {
-    id: "2",
-    username: "Maria Garcia",
-    email: "maria@example.com",
-    password: "password123",
-    avatar: "https://i.pravatar.cc/150?img=5",
-    skills: ["Python", "Django", "MySQL"],
-    languages: ["Spanish", "English", "French"],
-    experience: "5-10",
-    itPosition: "Backend Developer",
-    registrationDate: "2022-11-20",
-    telegramLink: "@mariagarcia",
-    githubLink: "github.com/mariagarcia"
-  },
-  {
-    id: "3",
-    username: "John Doe",
-    email: "john@example.com",
-    password: "password123",
-    avatar: "https://i.pravatar.cc/150?img=3",
-    skills: ["TypeScript", "React", "GraphQL"],
-    languages: ["English"],
-    experience: "1-3",
-    itPosition: "Full Stack Developer",
-    registrationDate: "2023-03-05",
-    telegramLink: "@johndoe",
-    githubLink: "github.com/johndoe"
-  },
-  {
-    id: "4",
-    username: "Sophia Wang",
-    email: "sophia@example.com",
-    password: "password123",
-    avatar: "https://i.pravatar.cc/150?img=9",
-    skills: ["Java", "Spring", "PostgreSQL"],
-    languages: ["Chinese", "English"],
-    experience: "3-5",
-    itPosition: "Backend Developer",
-    registrationDate: "2023-02-10",
-    telegramLink: "@sophiawang",
-    githubLink: "github.com/sophiawang"
-  }
-];
+// Empty default developers list
+const defaultDevelopers: User[] = [];
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
@@ -122,12 +65,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { sendEmail } = useEmailService();
 
   useEffect(() => {
-    // Load users from localStorage or use default developers
+    // Load users from localStorage
     const savedUsers = localStorage.getItem(USERS_STORAGE_KEY);
     if (savedUsers) {
       setUsers(JSON.parse(savedUsers));
     } else {
-      setUsers(defaultDevelopers);
+      // Initialize with empty array
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultDevelopers));
     }
     
@@ -194,12 +137,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       };
 
       const updatedUsers = [...users, newUser];
-      setUsers(updatedUsers);
       
+      // Update local state
+      setUsers(updatedUsers);
       setUser(newUser);
       setIsAuthenticated(true);
-      localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(newUser));
+      
+      // Persist to localStorage
       localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
+      localStorage.setItem(CURRENT_USER_STORAGE_KEY, JSON.stringify(newUser));
       
       return true;
     } catch (error) {

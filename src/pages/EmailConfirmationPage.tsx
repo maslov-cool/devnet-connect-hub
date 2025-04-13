@@ -1,96 +1,79 @@
 
-import { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { useAuth } from '../hooks/useAuth';
-import { useTranslation } from '../hooks/useTranslation';
-import { CheckCircle, XCircle } from 'lucide-react';
-import { toast } from 'sonner';
+import { useEffect, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { CheckCircle2, XCircle } from "lucide-react";
+import { useAuth } from "../hooks/useAuth";
+import { useTranslation } from "../hooks/useTranslation";
 
 const EmailConfirmationPage = () => {
-  const [verifying, setVerifying] = useState(true);
-  const [verified, setVerified] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
   const { verifyEmail } = useAuth();
+  const [isVerifying, setIsVerifying] = useState(true);
+  const [isSuccess, setIsSuccess] = useState(false);
   const { t } = useTranslation();
-
+  
   useEffect(() => {
-    const verifyEmailToken = async () => {
+    const params = new URLSearchParams(location.search);
+    const email = params.get("email");
+    
+    if (!email) {
+      setIsVerifying(false);
+      setIsSuccess(false);
+      return;
+    }
+    
+    const verifyEmailAsync = async () => {
       try {
-        setVerifying(true);
+        // Use verifyEmail with only email parameter
+        const success = await verifyEmail(email);
         
-        // Get token from URL params
-        const queryParams = new URLSearchParams(location.search);
-        const token = queryParams.get('token');
-        const email = queryParams.get('email');
-        
-        if (!token || !email) {
-          toast.error(t("language") === "ru" 
-            ? "Недостаточно данных для подтверждения email" 
-            : "Insufficient data for email verification");
-          setVerified(false);
-          setVerifying(false);
-          return;
-        }
-        
-        // Verify email with token
-        const result = await verifyEmail(email);
-        
-        if (result) {
-          toast.success(t("language") === "ru" 
-            ? "Email успешно подтвержден" 
-            : "Email verified successfully");
-          setVerified(true);
-        } else {
-          toast.error(t("language") === "ru" 
-            ? "Ошибка подтверждения email" 
-            : "Failed to verify email");
-          setVerified(false);
-        }
+        setIsSuccess(success);
+        setIsVerifying(false);
       } catch (error) {
-        console.error("Error verifying email:", error);
-        toast.error(t("language") === "ru" 
-          ? "Ошибка подтверждения email" 
-          : "Error verifying email");
-        setVerified(false);
-      } finally {
-        setVerifying(false);
+        console.error("Email verification error:", error);
+        setIsSuccess(false);
+        setIsVerifying(false);
       }
     };
     
-    verifyEmailToken();
+    verifyEmailAsync();
   }, [location.search, verifyEmail]);
   
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-gray-50 dark:bg-gray-900">
+    <div className="min-h-screen flex items-center justify-center p-4">
       <Card className="w-full max-w-md">
         <CardHeader className="text-center">
-          <CardTitle>{t("language") === "ru" ? "Подтверждение Email" : "Email Verification"}</CardTitle>
+          <CardTitle>{t("language") === "ru" ? "Подтверждение Email" : "Email Confirmation"}</CardTitle>
           <CardDescription>
-            {verifying 
-              ? t("language") === "ru" ? "Проверяем ваш email..." : "Verifying your email..." 
-              : verified 
-                ? t("language") === "ru" ? "Ваш email был подтвержден" : "Your email has been verified"
-                : t("language") === "ru" ? "Не удалось подтвердить email" : "Failed to verify email"
+            {isVerifying 
+              ? t("language") === "ru" ? "Проверка вашего email..." : "Verifying your email..."
+              : isSuccess 
+                ? t("language") === "ru" ? "Ваш email успешно подтвержден!" : "Your email has been successfully verified!"
+                : t("language") === "ru" ? "Не удалось подтвердить email." : "Failed to verify email."
             }
           </CardDescription>
         </CardHeader>
-        <CardContent className="flex flex-col items-center justify-center py-6">
-          {verifying ? (
-            <div className="animate-spin rounded-full h-16 w-16 border-t-2 border-b-2 border-blue-900"></div>
-          ) : verified ? (
-            <CheckCircle className="h-16 w-16 text-green-500" />
+        <CardContent className="flex flex-col items-center">
+          {isVerifying ? (
+            <div className="animate-spin h-16 w-16 border-4 border-blue-500 rounded-full border-t-transparent"></div>
+          ) : isSuccess ? (
+            <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
           ) : (
-            <XCircle className="h-16 w-16 text-red-500" />
+            <XCircle className="h-16 w-16 text-red-500 mb-4" />
+          )}
+          
+          {!isVerifying && (
+            <Button 
+              onClick={() => navigate("/login")}
+              className="mt-4"
+            >
+              {t("login")}
+            </Button>
           )}
         </CardContent>
-        <CardFooter className="flex justify-center">
-          <Button onClick={() => navigate("/login")}>
-            {t("language") === "ru" ? "Перейти на страницу входа" : "Go to login page"}
-          </Button>
-        </CardFooter>
       </Card>
     </div>
   );

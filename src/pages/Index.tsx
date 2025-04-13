@@ -23,10 +23,10 @@ const Index = () => {
       const query = searchQuery.toLowerCase();
       const filtered = users.filter(
         (u) =>
-          (u.username.toLowerCase().includes(query) ||
-            (u.skills && Array.isArray(u.skills) && u.skills.some(skill => skill.toLowerCase().includes(query))) ||
-            (u.itPosition && u.itPosition.toLowerCase().includes(query)) ||
-            (u.languages && Array.isArray(u.languages) && u.languages.some(lang => lang.toLowerCase().includes(query))))
+          (u.username && u.username.toLowerCase().includes(query)) ||
+          (u.skills && Array.isArray(u.skills) && u.skills.some(skill => skill.toLowerCase().includes(query))) ||
+          (u.itPosition && u.itPosition.toLowerCase().includes(query)) ||
+          (u.languages && Array.isArray(u.languages) && u.languages.some(lang => lang.toLowerCase().includes(query)))
       );
       setFilteredUsers(filtered);
     }
@@ -55,8 +55,8 @@ const Index = () => {
           ) : (
             <div className="col-span-2 text-center py-8">
               {t("language") === "ru" 
-                ? "Разработчиков не найдено" 
-                : "No developers found"}
+                ? "Разработчиков не найдено. Вы можете быть первым!" 
+                : "No developers found. You can be the first one!"}
             </div>
           )}
         </div>
@@ -70,8 +70,8 @@ const Index = () => {
             ) : (
               <div className="col-span-2 text-center py-8">
                 {t("language") === "ru" 
-                  ? "Разработчиков не найдено" 
-                  : "No developers found"}
+                  ? "Разработчиков не найдено. Зарегистрируйтесь и станьте первым!" 
+                  : "No developers found. Register and be the first one!"}
               </div>
             )}
           </div>
