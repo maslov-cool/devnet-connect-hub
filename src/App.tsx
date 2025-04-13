@@ -49,8 +49,8 @@ const App = () => (
               <Sonner />
               <BrowserRouter>
                 <Routes>
-                  {/* Redirect to login or home based on authentication */}
-                  <Route path="/" element={<Navigate to="/home" replace />} />
+                  {/* Redirect root to login page */}
+                  <Route path="/" element={<Navigate to="/login" replace />} />
                   <Route path="/login" element={<LoginPage />} />
                   <Route path="/register" element={<RegisterPage />} />
                   <Route path="/email-confirmation" element={<EmailConfirmationPage />} />

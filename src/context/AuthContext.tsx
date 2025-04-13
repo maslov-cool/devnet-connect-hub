@@ -31,7 +31,7 @@ interface AuthContextType {
   deleteAccount: () => Promise<boolean>;
   verifyEmail: (email: string) => Promise<boolean>;
   forgotPassword: (email: string) => Promise<boolean>;
-  resetPassword: (email: string, password: string) => Promise<boolean>;
+  resetPassword: (email: string, token: string) => Promise<boolean>;
 }
 
 export const AuthContext = createContext<AuthContextType>({
@@ -115,10 +115,6 @@ const defaultDevelopers: User[] = [
   }
 ];
 
-const saveMessages = (messages: any[], conversationKey: string) => {
-  localStorage.setItem(`chat_${conversationKey}`, JSON.stringify(messages));
-};
-
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [users, setUsers] = useState<User[]>([]);
@@ -126,12 +122,21 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const { sendEmail } = useEmailService();
 
   useEffect(() => {
-    // Clear any existing users and set our default developers
-    localStorage.removeItem(USERS_STORAGE_KEY);
-    localStorage.removeItem(CURRENT_USER_STORAGE_KEY);
-    setUsers(defaultDevelopers);
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultDevelopers));
-    setIsAuthenticated(false);
+    // Load users from localStorage or use default developers
+    const savedUsers = localStorage.getItem(USERS_STORAGE_KEY);
+    if (savedUsers) {
+      setUsers(JSON.parse(savedUsers));
+    } else {
+      setUsers(defaultDevelopers);
+      localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(defaultDevelopers));
+    }
+    
+    // Check if user is logged in
+    const savedUser = localStorage.getItem(CURRENT_USER_STORAGE_KEY);
+    if (savedUser) {
+      setUser(JSON.parse(savedUser));
+      setIsAuthenticated(true);
+    }
   }, []);
 
   const login = async (email: string, password: string): Promise<boolean> => {
@@ -254,18 +259,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     return false;
   };
 
-  const resetPassword = async (email: string, password: string): Promise<boolean> => {
-    console.log(`Resetting password for ${email}`);
-    const updatedUsers = users.map(u => {
-      if (u.email === email) {
-        return { ...u, password };
-      }
-      return u;
-    });
-    
-    setUsers(updatedUsers);
-    localStorage.setItem(USERS_STORAGE_KEY, JSON.stringify(updatedUsers));
-    
+  const resetPassword = async (email: string, token: string): Promise<boolean> => {
+    console.log(`Resetting password for ${email} with token ${token}`);
     return true;
   };
 
